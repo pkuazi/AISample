@@ -187,7 +187,7 @@ def image_query(product, geom, year, month):
                 layer.write(element)     
     return  dataid_list  
 
-def tiling_raster(rasterfile, wgs_bbox_list, dst_folder, n_bands, tileid):
+def tiling_raster(rasterfile, wgs_bbox_list, dst_folder, n_bands, namestart, nameend):
     print('the image is :', rasterfile)
     dataset = gdal.Open(rasterfile)
     if dataset is None:
@@ -207,7 +207,7 @@ def tiling_raster(rasterfile, wgs_bbox_list, dst_folder, n_bands, tileid):
         col = '0' + str(j)  
         print('the current tiling location is ',i,j)
 #         tile_name = region + str(year) + '_'+row[-2:] + col[-2:] + '_' + tileid + '.tif'
-        tile_name = region + '_'+row[-2:] + col[-2:] + '_' + tileid + '.tif'
+        tile_name = namestart + '_'+row[-2:] + col[-2:]+ nameend
         minx, maxy = GeomTrans('EPSG:4326', proj).transform_point([minx_wgs, maxy_wgs])
         maxx, miny = GeomTrans('EPSG:4326', proj).transform_point([maxx_wgs, miny_wgs])
         
@@ -257,16 +257,16 @@ if __name__ == "__main__":
         region_dem_file = os.path.join(dem_path,region+'_dem.tif')
         merge_all_dem(region_data,region_dem_file)
     
-        demfile = tiling_raster(region_dem_file, wgs_bbox_list, dem_tile_path, 1, 'dem')
+        demfile = tiling_raster(region_dem_file, wgs_bbox_list, dem_tile_path, 1, region, '_dem.tif')
         
         for year in year_list:
             imageids = get_imageids(images_key=images_key, year=year)
             print(imageids)
             for image in imageids:
                 rasterfile = os.path.join(irrg_path, image + '_IRRG.TIF')
-                tiling_raster(rasterfile, wgs_bbox_list, irrg_tile_path, 3, image)
+                tiling_raster(rasterfile, wgs_bbox_list, irrg_tile_path, 3, region + '_' + str(year), image+'.tif')
             gtfile = os.path.join(gt_path, region + '_' + str(year) + '.tif')
-            tiling_raster(gtfile, wgs_bbox_list, gt_tile_path, 1, 'label')
+            tiling_raster(gtfile, wgs_bbox_list, gt_tile_path, 1, region + '_' + str(year),'_label.tif')
             
             
 
