@@ -6,6 +6,81 @@ from shapely.geometry import mapping, Polygon
 BLOCK_SIZE=512
 OVERLAP_SIZE=0
 
+def gen_subtask_bbox_shp(rasterfile, tileid, dst_shp):
+    print('the image is :', rasterfile)
+    dataset = gdal.Open(rasterfile)
+    if dataset is None:
+        print("Failed to open file: " + rasterfile)
+        sys.exit(1)
+    band = dataset.GetRasterBand(1)
+    xsize = dataset.RasterXSize
+    ysize = dataset.RasterYSize
+    proj = dataset.GetProjection()
+    geotrans = dataset.GetGeoTransform()
+    gt = list(geotrans)
+    noDataValue = band.GetNoDataValue()
+    
+    rnum_tile = int((ysize - BLOCK_SIZE) / (BLOCK_SIZE - OVERLAP_SIZE)) + 1
+    cnum_tile = int((xsize - BLOCK_SIZE) / (BLOCK_SIZE - OVERLAP_SIZE)) + 1
+    print('the number of tile is :', rnum_tile * cnum_tile)
+    
+    subtask_list = []
+    minx_list = []
+    maxy_list = []
+    maxx_list = []
+    miny_list = []
+    
+     # schema is a dictory
+    schema = {'geometry': 'Polygon', 'properties': {'id': 'int', 'dataid': 'str', 'row':'int', 'col':'int'} }
+    with fiona.open(dst_shp, mode='w', driver='ESRI Shapefile', schema=schema, crs='EPSG:4326', encoding='utf-8') as layer:
+        for i in range(rnum_tile + 1):
+            print(i)
+            for j in range(cnum_tile + 1):
+                xoff = 0 + (BLOCK_SIZE - OVERLAP_SIZE) * j
+                yoff = 0 + (BLOCK_SIZE - OVERLAP_SIZE) * i
+                print("the row and column of tile is :", xoff, yoff)
+    
+                gt[0] = geotrans[0] + xoff * geotrans[1]
+                gt[3] = geotrans[3] + yoff * geotrans[5]
+                
+                subtask_list.append(tileid + str(i) + '_' + str(j))
+                
+                minx = gt[0]
+                maxy = gt[3]
+                maxx = gt[0] + BLOCK_SIZE * geotrans[1]
+                miny = gt[3] + BLOCK_SIZE * geotrans[5]
+                
+                # the last column                 
+                if j == cnum_tile:
+                    maxx = geotrans[0] + xsize * geotrans[1]
+                    minx = maxx - BLOCK_SIZE * geotrans[1]
+                # the last row
+                if i == rnum_tile:
+                    miny = geotrans[3] + ysize * geotrans[5]
+                    maxy = miny - BLOCK_SIZE * geotrans[5]
+                
+                minx_wgs, maxy_wgs = GeomTrans(proj, 'EPSG:4326').transform_point([minx, maxy])
+                maxx_wgs, miny_wgs = GeomTrans(proj, 'EPSG:4326').transform_point([maxx, miny])
+                
+                poly = Polygon([[minx_wgs, maxy_wgs], [maxx_wgs, maxy_wgs], [maxx_wgs, miny_wgs], [minx_wgs, miny_wgs], [minx_wgs, maxy_wgs]])
+                element = {'geometry':mapping(poly), 'properties': {'id': i * cnum_tile + j, 'dataid': tileid, 'row':i, 'col':j}}
+                layer.write(element) 
+                
+                minx_list.append(minx_wgs)
+                maxy_list.append(maxy_wgs)
+                maxx_list.append(maxx_wgs)
+                miny_list.append(miny_wgs)
+                             
+    bb = {}
+    bb["subtaskname"] = subtask_list
+    bb["minx"] = minx_list
+    bb["maxy"] = maxy_list
+    bb["maxx"] = maxx_list
+    bb["miny"] = miny_list      
+ 
+    df = pd.DataFrame(bb)
+    df.to_csv('/tmp/subtask_512_bbox_wgs.csv')
+
 def gen_subtask_bbox(rasterfile,imageid):
     print('the image is :', rasterfile)
     dataset = gdal.Open(rasterfile)
