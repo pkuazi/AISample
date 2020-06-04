@@ -206,8 +206,8 @@ def tiling_raster(rasterfile, wgs_bbox_list, dst_folder, n_bands, tileid):
         row = '0' + str(i)           
         col = '0' + str(j)  
         print('the current tiling location is ',i,j)
-        tile_name = region + str(year) + '_'+row[-2:] + col[-2:] + '_' + tileid + '.tif'
-        
+#         tile_name = region + str(year) + '_'+row[-2:] + col[-2:] + '_' + tileid + '.tif'
+        tile_name = region + '_'+row[-2:] + col[-2:] + '_' + tileid + '.tif'
         minx, maxy = GeomTrans('EPSG:4326', proj).transform_point([minx_wgs, maxy_wgs])
         maxx, miny = GeomTrans('EPSG:4326', proj).transform_point([maxx_wgs, miny_wgs])
         
