@@ -1,7 +1,7 @@
 import os
 
-image_path = '/mnt/rsimages/lulc/LULCLANDSAT'
-irrg_path = '/mnt/rsimages/lulc/IRRG'
+ROOT_PATH = '/mnt/win/data/AISample'
+irrg_path = os.path.join(ROOT_PATH,'BANDS_IRRG')
 files = os.listdir(image_path)
 file_ends = {'LM1':{'IR' :'_B6.TIF', 'R' : '_B5.TIF', 'G' : '_B4.TIF'},'LM2':{'IR' :'_B6.TIF', 'R' : '_B5.TIF', 'G' : '_B4.TIF'},'LM3':{'IR' :'_B6.TIF', 'R' : '_B5.TIF', 'G' : '_B4.TIF'}, 'LT5':{'IR':'_B4.TIF', 'R' : '_B3.TIF', 'G' : '_B2.TIF'}, 'LE7':{'IR' :'_B40.TIF', 'R' : '_B30.TIF', 'G' :'_B20.TIF'}, 'LC8':{'IR' : '_B5.TIF', 'R' : '_B4.TIF', 'G' : '_B3.TIF'}}
 for file in files:
