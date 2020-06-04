@@ -10,9 +10,6 @@ from dem_search_merge import region_search_dem,merge_all_dem
 
 pg_src = pgsql.Pgsql("10.0.81.35", "2345", "postgres", "", "gscloud_metadata")
 
-region_tif_path = '/mnt/win/data/AISample/region_raster'
-region_files = os.listdir(region_tif_path)
-
 BLOCK_SIZE = 256
 OVERLAP_SIZE = 13
 
@@ -28,13 +25,17 @@ region_dict = {'bj':{'region_tif':'bj.tif', 'year':[2001, 2003, 2004], 'images_k
                'yishui':{'region_tif':'yishui.tif', 'year':[1995, 2005, 2015], 'images_key':'yishui'},
                'zjk':{'region_tif': 'zjk.tif', 'year':[1990, 2000, 2010, 2015], 'images_key':'cd_zjk'},
                }
-imageids_file = '/mnt/win/data/AISample/IMAGE/imageids.csv'
-irrg_path = '/mnt/win/data/AISample/BANDS_IRRG'
-irrg_tile_path = '/mnt/win/data/AISample/TILE_IRRG'
-gt_path = '/mnt/win/data/AISample/GT'
-gt_tile_path = '/mnt/win/data/AISample/TILE_GT'
-dem_path = '/mnt/win/data/AISample/DEM'
-dem_tile_path = '/mnt/win/data/AISample/TILE_DEM'
+ROOT_PATH = '/mnt/win/data/AISample'
+region_tif_path = os.path.join(ROOT_PATH,'region_raster')
+region_files = os.listdir(region_tif_path)
+imageid_path = os.path.join(ROOT_PATH,'IMAGE')
+imageids_file = os.path.join(imageid_path,'imageids.csv')
+irrg_path = os.path.join(ROOT_PATH,'BANDS_IRRG')
+irrg_tile_path = os.path.join(ROOT_PATH,'TILE_IRRG')
+gt_path = os.path.join(ROOT_PATH,'GT')
+gt_tile_path = os.path.join(ROOT_PATH,'TILE_GT')
+dem_path = os.path.join(ROOT_PATH,'DEM')
+dem_tile_path = os.path.join(ROOT_PATH,'TILE_DEM')
 
 def get_imageids(images_key, year):
 #     images_key is the images_key in region_dict, year is year in region_dict
