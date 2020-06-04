@@ -25,7 +25,7 @@ region_dict = {'bj':{'region_tif':'bj.tif', 'year':[2001, 2003, 2004], 'images_k
                'yishui':{'region_tif':'yishui.tif', 'year':[1995, 2005, 2015], 'images_key':'yishui'},
                'zjk':{'region_tif': 'zjk.tif', 'year':[1990, 2000, 2010, 2015], 'images_key':'cd_zjk'},
                }
-ROOT_PATH = '/mnt/win/data/AISample'
+ROOT_PATH = '/mnt/rsimages/lulc/AISample'
 region_tif_path = os.path.join(ROOT_PATH,'region_raster')
 region_files = os.listdir(region_tif_path)
 imageid_path = os.path.join(ROOT_PATH,'IMAGE')
