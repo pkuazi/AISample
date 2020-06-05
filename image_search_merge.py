@@ -4,6 +4,58 @@ from shapely.geometry import mapping, Polygon
 
 pg_src = pgsql.Pgsql("10.0.81.35", "2345","postgres", "", "gscloud_metadata")
 
+def image_query(product, geom, year, month):
+    shp_file = '/mnt/win/data/AISample/region_bbox/bj_subbox.shp'
+    with fiona.open(shp_file, 'r') as inp:
+        projection = inp.crs_wkt
+        prj = inp.crs
+        prj_epsg_int = int(prj['init'][5:9])
+        for f in inp:           
+            geojson = json.dumps(f['geometry'])
+            geom = ogr.CreateGeometryFromJson(geojson)
+            wkt = geom.ExportToWkt()
+            '''
+              SELECT dataid, satellite, datatype, datadate, datadate_year, datadate_month, 
+       datadate_day, cloudcover, ct_long, ct_lat, lt_long, lt_lat, rt_long, rt_lat, rb_long, rb_lat, lb_long, 
+       lb_lat, dataexists, layerexists, the_geom FROM public.metadata_landsat_oli_tirs WHERE ST_Contains(the_geom, st_geomfromtext('POLYGON ((116.155363384491 40.546137617483,116.246828353439 40.546137617483,116.246828353439 40.4775818941055,116.155363384491 40.4775818941055,116.155363384491 40.546137617483))',4326)) ORDER BY cloudcover ASC limit 10;
+
+            '''
+    region_query_sql = '''SELECT dataid, satellite, datatype, datadate, datadate_year, datadate_month, 
+       datadate_day, cloudcover, ct_long, ct_lat, lt_long, lt_lat, rt_long, rt_lat, rb_long, rb_lat, lb_long, 
+       lb_lat, dataexists, layerexists, the_geom FROM public.%s WHERE ST_Contains(the_geom, st_geomfromtext('%s',%s)) ORDER BY cloudcover ASC limit 10;''' % ('metadata_landsat_oli_tirs', wkt, prj_epsg_int)
+    print(region_query_sql)
+    data = pg_src.getAll(region_query_sql)
+    num = len(data)
+    print(num)
+    region_query_sql = '''SELECT dataid, satellite, datatype, path, "row", datadate, datadate_year, datadate_month, 
+       datadate_day, cloudcover, ct_long, ct_lat, lt_long, lt_lat, rt_long, rt_lat, rb_long, rb_lat, lb_long, 
+       lb_lat, dataexists, layerexists, the_geom
+  FROM public.%s WHERE ST_Contains(the_geom, %s) ORDER BY cloudcover ASC limit 10;''' % ('metadata_landsat_oli_tirs', geom)
+    data = pg_src.getAll(region_query_sql)
+    
+    data_sql = '''SELECT id, dataid, name, "path", "row",  lt_long, lt_lat,  rb_long, rb_lat,the_geom FROM public.metadata_dem_gdem where rb_long>%s and lt_long<%s and rb_lat<%s and lt_lat>%s ORDER BY row DESC;''' % (min_long, max_long, max_lat, min_lat)
+    dem_data = pg_src.getAll(data_sql)
+    num = len(dem_data)
+    
+    # output bounding box into shp
+    dataid_list = []
+    
+     # schema is a dictory
+    schema = {'geometry': 'Polygon', 'properties': {'id': 'int', 'dataid': 'str', 'path':'int', 'row':'int'} }
+    #  use fiona.open
+    with fiona.open(dst_shp, mode='w', driver='ESRI Shapefile', schema=schema, crs='EPSG:4326', encoding='utf-8') as layer:
+        for i in range(num):
+            record = dem_data[i]
+            bbox = dem_data[i][9]
+            dataid = dem_data[i][1]
+            if dataid.startswith('ASTGTM2'):
+                dataid_list.append(dataid)
+                minx, maxy, maxx, miny = dem_data[i][5], dem_data[i][6], dem_data[i][7], dem_data[i][8]
+                poly = Polygon([[minx, maxy], [maxx, maxy], [maxx, miny], [minx, miny], [minx, maxy]])
+                element = {'geometry':mapping(poly), 'properties': {'id': i, 'dataid': dataid, 'path':dem_data[i][3], 'row':dem_data[i][4]}}
+                layer.write(element)     
+    return  dataid_list 
+
 def region_search_dem_toshp(min_lat, max_lat, min_long, max_long, dst_shp):
     data_sql = '''SELECT id, dataid, name, "path", "row",  lt_long, lt_lat,  rb_long, rb_lat,the_geom FROM public.metadata_dem_gdem where rb_long>%s and lt_long<%s and rb_lat<%s and lt_lat>%s ORDER BY row DESC;'''%(min_long,max_long,max_lat,min_lat)
     dem_data = pg_src.getAll(data_sql)

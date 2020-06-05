@@ -6,14 +6,12 @@ from shapely.geometry import mapping, Polygon
 import pandas as pd
 import utils.pgsql as pgsql
 import json
-from dem_search_merge import region_search_dem,merge_all_dem
+from image_search_merge import region_search_dem,merge_all_dem
 import numpy as np
-
-pg_src = pgsql.Pgsql("10.0.81.35", "2345", "postgres", "", "gscloud_metadata")
+from gen_subtask_bbox import gen_tile_bbox
 
 BLOCK_SIZE = 256
 OVERLAP_SIZE = 13
-AI_RESOLUTION = 30
 
 region_dict = {'bj':{'region_tif':'bj.tif', 'year':[2001, 2003, 2004], 'images_key':'bj'},
                'cd':{'region_tif':'cd.tif', 'year':[1990, 2000, 2010, 2015], 'images_key':'cd_zjk'},
@@ -52,145 +50,7 @@ def get_imageids(images_key, year):
     imageids = imageids_df['dataid']
     idlist = imageids.tolist()
     return idlist
-
-
-def gen_tile_bbox(region_file):
-    print('the image is :', region_file)
-    dataset = gdal.Open(region_file)
-    if dataset is None:
-        print("Failed to open file: " + region_file)
-        sys.exit(1)
-    band = dataset.GetRasterBand(1)
-    xsize = dataset.RasterXSize
-    ysize = dataset.RasterYSize
-    proj = dataset.GetProjection()
-    geotrans = dataset.GetGeoTransform()
-    tile_gt = list(geotrans)
-    noDataValue = band.GetNoDataValue()
-    
-    minx_wgs, maxy_wgs = GeomTrans(proj, 'EPSG:4326').transform_point([geotrans[0], geotrans[3]])
-    maxx_wgs, miny_wgs = GeomTrans(proj, 'EPSG:4326').transform_point([geotrans[0]+xsize*geotrans[1], geotrans[3]+ysize*geotrans[5]])
-    region_bbox=[minx_wgs, maxy_wgs,maxx_wgs, miny_wgs]
-    
-    rnum_tile = int((ysize - BLOCK_SIZE) / (BLOCK_SIZE - OVERLAP_SIZE)) + 1
-    cnum_tile = int((xsize - BLOCK_SIZE) / (BLOCK_SIZE - OVERLAP_SIZE)) + 1
-    print('the number of tile is :', rnum_tile * cnum_tile)
-    
-    wgs_bbox_list = []
-    
-    for i in range(rnum_tile + 1):
-        print(i)
-        for j in range(cnum_tile + 1):
-            xoff = 0 + (BLOCK_SIZE - OVERLAP_SIZE) * j
-            yoff = 0 + (BLOCK_SIZE - OVERLAP_SIZE) * i
-            # the last column                 
-            if j == cnum_tile:
-                xoff = xsize - BLOCK_SIZE
-            # the last row
-            if i == rnum_tile:
-                yoff = ysize - BLOCK_SIZE
-            print("the row and column of tile is :", xoff, yoff)
-            
-            data = band.ReadAsArray(xoff, yoff, BLOCK_SIZE, BLOCK_SIZE)
-            if np.all(data == noDataValue):
-                continue
-            
-               
-            tile_gt[0] = geotrans[0] + xoff * geotrans[1]
-            tile_gt[3] = geotrans[3] + yoff * geotrans[5]
-            
-            minx = tile_gt[0]
-            maxy = tile_gt[3]
-            maxx = tile_gt[0] + BLOCK_SIZE * geotrans[1]
-            miny = tile_gt[3] + BLOCK_SIZE * geotrans[5]
-            
-            minx_wgs, maxy_wgs = GeomTrans(proj, 'EPSG:4326').transform_point([minx, maxy])
-            maxx_wgs, miny_wgs = GeomTrans(proj, 'EPSG:4326').transform_point([maxx, miny])
-            
-            wgs_bbox_list.append([minx_wgs, maxy_wgs, maxx_wgs, miny_wgs, i, j])
-           
-                        
-    return wgs_bbox_list,rnum_tile,cnum_tile,region_bbox
-
-
-def tile_bbox_to_shp(wgs_bbox_list, region_tiles_shp):
-     # schema is a dictory
-    schema = {'geometry': 'Polygon', 'properties': {'id': 'int', 'row':'int', 'col':'int'} }
-    with fiona.open(region_tiles_shp, mode='w', driver='ESRI Shapefile', schema=schema, crs='EPSG:4326', encoding='utf-8') as layer:
-        for wgs_bbox in wgs_bbox_list:
-            minx_wgs, maxy_wgs, maxx_wgs, miny_wgs, i, j = wgs_bbox[0], wgs_bbox[1], wgs_bbox[2], wgs_bbox[3], wgs_bbox[4], wgs_bbox[5]
-            poly = Polygon([[minx_wgs, maxy_wgs], [maxx_wgs, maxy_wgs], [maxx_wgs, miny_wgs], [minx_wgs, miny_wgs], [minx_wgs, maxy_wgs]])
-            element = {'geometry':mapping(poly), 'properties': {'id': i * cnum_tile + j, 'row':i, 'col':j}}
-            layer.write(element) 
-        layer.close()
-
         
-def gjson_geotrans_to_wgs84(geojson, inproj):
-    geom = ogr.CreateGeometryFromJson(geojson)
-                 
-    outSpatialRef = osr.SpatialReference()
-    outSpatialRef.ImportFromEPSG(4326) 
-                
-    inSpatialRef = osr.SpatialReference()
-    inSpatialRef.ImportFromWkt(inproj)
-        
-    transform = osr.CoordinateTransformation(inSpatialRef, outSpatialRef) 
-    trans_state = geom.Transform(transform)
-    return trans_state, geom
-
-
-def image_query(product, geom, year, month):
-    shp_file = '/mnt/win/data/AISample/region_bbox/bj_subbox.shp'
-    with fiona.open(shp_file, 'r') as inp:
-        projection = inp.crs_wkt
-        prj = inp.crs
-        prj_epsg_int = int(prj['init'][5:9])
-        for f in inp:           
-            geojson = json.dumps(f['geometry'])
-            geom = ogr.CreateGeometryFromJson(geojson)
-            wkt = geom.ExportToWkt()
-            '''
-              SELECT dataid, satellite, datatype, datadate, datadate_year, datadate_month, 
-       datadate_day, cloudcover, ct_long, ct_lat, lt_long, lt_lat, rt_long, rt_lat, rb_long, rb_lat, lb_long, 
-       lb_lat, dataexists, layerexists, the_geom FROM public.metadata_landsat_oli_tirs WHERE ST_Contains(the_geom, st_geomfromtext('POLYGON ((116.155363384491 40.546137617483,116.246828353439 40.546137617483,116.246828353439 40.4775818941055,116.155363384491 40.4775818941055,116.155363384491 40.546137617483))',4326)) ORDER BY cloudcover ASC limit 10;
-
-            '''
-    region_query_sql = '''SELECT dataid, satellite, datatype, datadate, datadate_year, datadate_month, 
-       datadate_day, cloudcover, ct_long, ct_lat, lt_long, lt_lat, rt_long, rt_lat, rb_long, rb_lat, lb_long, 
-       lb_lat, dataexists, layerexists, the_geom FROM public.%s WHERE ST_Contains(the_geom, st_geomfromtext('%s',%s)) ORDER BY cloudcover ASC limit 10;''' % ('metadata_landsat_oli_tirs', wkt, prj_epsg_int)
-    print(region_query_sql)
-    data = pg_src.getAll(region_query_sql)
-    num = len(data)
-    print(num)
-    region_query_sql = '''SELECT dataid, satellite, datatype, path, "row", datadate, datadate_year, datadate_month, 
-       datadate_day, cloudcover, ct_long, ct_lat, lt_long, lt_lat, rt_long, rt_lat, rb_long, rb_lat, lb_long, 
-       lb_lat, dataexists, layerexists, the_geom
-  FROM public.%s WHERE ST_Contains(the_geom, %s) ORDER BY cloudcover ASC limit 10;''' % ('metadata_landsat_oli_tirs', geom)
-    data = pg_src.getAll(region_query_sql)
-    
-    data_sql = '''SELECT id, dataid, name, "path", "row",  lt_long, lt_lat,  rb_long, rb_lat,the_geom FROM public.metadata_dem_gdem where rb_long>%s and lt_long<%s and rb_lat<%s and lt_lat>%s ORDER BY row DESC;''' % (min_long, max_long, max_lat, min_lat)
-    dem_data = pg_src.getAll(data_sql)
-    num = len(dem_data)
-    
-    # output bounding box into shp
-    dataid_list = []
-    
-     # schema is a dictory
-    schema = {'geometry': 'Polygon', 'properties': {'id': 'int', 'dataid': 'str', 'path':'int', 'row':'int'} }
-    #  use fiona.open
-    with fiona.open(dst_shp, mode='w', driver='ESRI Shapefile', schema=schema, crs='EPSG:4326', encoding='utf-8') as layer:
-        for i in range(num):
-            record = dem_data[i]
-            bbox = dem_data[i][9]
-            dataid = dem_data[i][1]
-            if dataid.startswith('ASTGTM2'):
-                dataid_list.append(dataid)
-                minx, maxy, maxx, miny = dem_data[i][5], dem_data[i][6], dem_data[i][7], dem_data[i][8]
-                poly = Polygon([[minx, maxy], [maxx, maxy], [maxx, miny], [minx, miny], [minx, maxy]])
-                element = {'geometry':mapping(poly), 'properties': {'id': i, 'dataid': dataid, 'path':dem_data[i][3], 'row':dem_data[i][4]}}
-                layer.write(element)     
-    return  dataid_list  
-
 def tiling_raster(rasterfile, wgs_bbox_list, dst_folder, n_bands, namestart, nameend):
     print('the image is :', rasterfile)
     dataset = gdal.Open(rasterfile)
@@ -205,11 +65,7 @@ def tiling_raster(rasterfile, wgs_bbox_list, dst_folder, n_bands, namestart, nam
     geotrans = dataset.GetGeoTransform()
     gt = list(geotrans)
     noDataValue = band.GetNoDataValue()
-    
-#     if geotrans[3]!= AI_RESOLUTION:
-#         print('the image %s needs resampling'%rasterfile)
-#         return
-    
+      
     for wgs_bbox in wgs_bbox_list:
         minx_wgs, maxy_wgs, maxx_wgs, miny_wgs, i, j = wgs_bbox[0], wgs_bbox[1], wgs_bbox[2], wgs_bbox[3], wgs_bbox[4], wgs_bbox[5]
         row = '0' + str(i)           
@@ -259,7 +115,7 @@ if __name__ == "__main__":
         #     region is one of the region_dict.keys()
         region_tif = region_dict[region]['region_tif']
         region_file = os.path.join(region_tif_path, region_tif)
-        wgs_bbox_list, rnum, cnum, region_bbox = gen_tile_bbox(region_file)
+        wgs_bbox_list, rnum, cnum, region_bbox = gen_tile_bbox(region_file,BLOCK_SIZE, OVERLAP_SIZE)
         print('row,col: %s, %s'%(rnum,cnum))
         images_key = region_dict[region]['images_key']
         year_list = region_dict[region]['year']
