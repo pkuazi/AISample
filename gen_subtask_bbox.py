@@ -1,6 +1,6 @@
 from osgeo import gdal, ogr
 import os
-from geotrans import GeomTrans
+from utils.geotrans import GeomTrans
 from shapely.geometry import mapping, Polygon
 
 BLOCK_SIZE=256
