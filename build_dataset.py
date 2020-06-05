@@ -93,7 +93,7 @@ def gen_tile_bbox(region_file):
             
             data = band.ReadAsArray(xoff, yoff, BLOCK_SIZE, BLOCK_SIZE)
             if np.all(data == noDataValue):
-                conitnue
+                continue
             
                
             tile_gt[0] = geotrans[0] + xoff * geotrans[1]
