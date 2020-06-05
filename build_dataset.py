@@ -33,11 +33,16 @@ imageid_path = os.path.join(ROOT_PATH,'IMAGE')
 imageids_file = os.path.join(imageid_path,'imageids.csv')
 irrg_path = os.path.join(ROOT_PATH,'BANDS_IRRG')
 irrg_tile_path = os.path.join(ROOT_PATH,'TILE_IRRG')
+if not os.path.exists(irrg_tile_path):
+    os.system('mkdir %s'%irrg_tile_path)
 gt_path = os.path.join(ROOT_PATH,'GT')
 gt_tile_path = os.path.join(ROOT_PATH,'TILE_GT')
-dem_path = os.path.join(ROOT_PATH,'DEM')
-dem_tile_path = os.path.join(ROOT_PATH,'TILE_DEM')
-
+if not os.path.exists(gt_tile_path):
+    os.system('mkdir %s'%gt_tile_path)
+# dem_path = os.path.join(ROOT_PATH,'DEM')
+# dem_tile_path = os.path.join(ROOT_PATH,'TILE_DEM')
+# if not os.path.exists(dem_tile_path):
+#     os.system('mkdir %s'%dem_tile_path)
 def get_imageids(images_key, year):
 #     images_key is the images_key in region_dict, year is year in region_dict
     imageids_data = pd.read_csv(imageids_file)
@@ -256,15 +261,15 @@ if __name__ == "__main__":
         images_key = region_dict[region]['images_key']
         year_list = region_dict[region]['year']
         
-        region_minx=region_bbox[0]
-        region_miny=region_bbox[3]
-        region_maxx=region_bbox[2]
-        region_maxy=region_bbox[1]
-        region_data = region_search_dem(region_miny, region_maxy, region_minx, region_maxx)
-        region_dem_file = os.path.join(dem_path,region+'_dem.tif')
-        merge_all_dem(region_data,region_dem_file)
-    
-        demfile = tiling_raster(region_dem_file, wgs_bbox_list, dem_tile_path, 1, region, '_dem.tif')
+#         region_minx=region_bbox[0]
+#         region_miny=region_bbox[3]
+#         region_maxx=region_bbox[2]
+#         region_maxy=region_bbox[1]
+#         region_data = region_search_dem(region_miny, region_maxy, region_minx, region_maxx)
+#         region_dem_file = os.path.join(dem_path,region+'_dem.tif')
+#         merge_all_dem(region_data,region_dem_file)
+#     
+#         demfile = tiling_raster(region_dem_file, wgs_bbox_list, dem_tile_path, 1, region, '_dem.tif')
         
         for year in year_list:
             imageids = get_imageids(images_key=images_key, year=year)
