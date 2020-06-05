@@ -2,6 +2,7 @@ from osgeo import gdal, ogr
 import os
 from utils.geotrans import GeomTrans
 from shapely.geometry import mapping, Polygon
+import numpy as np
 
 BLOCK_SIZE=256
 OVERLAP_SIZE=13
