@@ -243,11 +243,13 @@ def tiling_raster(rasterfile, wgs_bbox_list, dst_folder, n_bands, namestart, nam
         dst_ds = driver.Create(tile_file, BLOCK_SIZE, BLOCK_SIZE, dst_nbands, dst_datatype)
         dst_ds.SetGeoTransform(gt)
         dst_ds.SetProjection(proj)
-        dst_ds.SetNoDataValue(noDataValue)
+
         if dst_nbands==1:
+            tile_data[tile_data == noDataValue] = -9999
             dst_ds.GetRasterBand(1).WriteArray(tile_data)
         else:
             for i in range(dst_nbands):
+                tile_data[i][tile_data[i] == noDataValue] = -9999
                 dst_ds.GetRasterBand(i+1).WriteArray(tile_data[i])
         del dst_ds
 
