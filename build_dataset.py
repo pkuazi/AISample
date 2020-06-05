@@ -7,6 +7,7 @@ import pandas as pd
 import utils.pgsql as pgsql
 import json
 from dem_search_merge import region_search_dem,merge_all_dem
+import numpy as np
 
 pg_src = pgsql.Pgsql("10.0.81.35", "2345", "postgres", "", "gscloud_metadata")
 
@@ -53,10 +54,7 @@ def get_imageids(images_key, year):
     return idlist
 
 
-def gen_tile_bbox(region):
-#     region is one of the region_dict.keys()
-    region_tif = region_dict[region]['region_tif']
-    region_file = os.path.join(region_tif_path, region_tif)
+def gen_tile_bbox(region_file):
     print('the image is :', region_file)
     dataset = gdal.Open(region_file)
     if dataset is None:
@@ -78,8 +76,6 @@ def gen_tile_bbox(region):
     cnum_tile = int((xsize - BLOCK_SIZE) / (BLOCK_SIZE - OVERLAP_SIZE)) + 1
     print('the number of tile is :', rnum_tile * cnum_tile)
     
-#     xoff_list = []
-#     yoff_list = []
     wgs_bbox_list = []
     
     for i in range(rnum_tile + 1):
@@ -95,8 +91,10 @@ def gen_tile_bbox(region):
                 yoff = ysize - BLOCK_SIZE
             print("the row and column of tile is :", xoff, yoff)
             
-#                 xoff_list.append(xoff)
-#                 yoff_list.append(yoff)
+            data = band.ReadAsArray(xoff, yoff, BLOCK_SIZE, BLOCK_SIZE)
+            if np.all(data == noDataValue):
+                conitnue
+            
                
             tile_gt[0] = geotrans[0] + xoff * geotrans[1]
             tile_gt[3] = geotrans[3] + yoff * geotrans[5]
@@ -258,7 +256,10 @@ if __name__ == "__main__":
 # bj_2001: LT51230322001323BJC00  LT51230332001323BJC00
     for region in region_dict.keys():
         region_tiles_shp = os.path.join('/mnt/win/data/AISample/region_bbox/%s' % (region + '_subtiles.shp'))
-        wgs_bbox_list, rnum, cnum, region_bbox = gen_tile_bbox(region)
+        #     region is one of the region_dict.keys()
+        region_tif = region_dict[region]['region_tif']
+        region_file = os.path.join(region_tif_path, region_tif)
+        wgs_bbox_list, rnum, cnum, region_bbox = gen_tile_bbox(region_file)
         print('row,col: %s, %s'%(rnum,cnum))
         images_key = region_dict[region]['images_key']
         year_list = region_dict[region]['year']
