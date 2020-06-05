@@ -208,9 +208,9 @@ def tiling_raster(rasterfile, wgs_bbox_list, dst_folder, n_bands, namestart, nam
     gt = list(geotrans)
     noDataValue = band.GetNoDataValue()
     
-    if geotrans[3]!= AI_RESOLUTION:
-        print('the image %s needs resampling'%rasterfile)
-        return
+#     if geotrans[3]!= AI_RESOLUTION:
+#         print('the image %s needs resampling'%rasterfile)
+#         return
     
     for wgs_bbox in wgs_bbox_list:
         minx_wgs, maxy_wgs, maxx_wgs, miny_wgs, i, j = wgs_bbox[0], wgs_bbox[1], wgs_bbox[2], wgs_bbox[3], wgs_bbox[4], wgs_bbox[5]
