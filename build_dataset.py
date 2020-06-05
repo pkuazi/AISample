@@ -12,6 +12,7 @@ pg_src = pgsql.Pgsql("10.0.81.35", "2345", "postgres", "", "gscloud_metadata")
 
 BLOCK_SIZE = 256
 OVERLAP_SIZE = 13
+AI_RESOLUTION = 30
 
 region_dict = {'bj':{'region_tif':'bj.tif', 'year':[2001, 2003, 2004], 'images_key':'bj'},
                'cd':{'region_tif':'cd.tif', 'year':[1990, 2000, 2010, 2015], 'images_key':'cd_zjk'},
@@ -192,7 +193,8 @@ def tiling_raster(rasterfile, wgs_bbox_list, dst_folder, n_bands, namestart, nam
     dataset = gdal.Open(rasterfile)
     if dataset is None:
         print("Failed to open file: " + rasterfile)
-        sys.exit(1)
+#         sys.exit(1)
+        return
     band = dataset.GetRasterBand(1)
     xsize = dataset.RasterXSize
     ysize = dataset.RasterYSize
@@ -200,6 +202,10 @@ def tiling_raster(rasterfile, wgs_bbox_list, dst_folder, n_bands, namestart, nam
     geotrans = dataset.GetGeoTransform()
     gt = list(geotrans)
     noDataValue = band.GetNoDataValue()
+    
+    if geotrans[3]!= AI_RESOLUTION:
+        print('the image %s needs resampling'%rasterfile)
+        return
     
     for wgs_bbox in wgs_bbox_list:
         minx_wgs, maxy_wgs, maxx_wgs, miny_wgs, i, j = wgs_bbox[0], wgs_bbox[1], wgs_bbox[2], wgs_bbox[3], wgs_bbox[4], wgs_bbox[5]
@@ -232,6 +238,7 @@ def tiling_raster(rasterfile, wgs_bbox_list, dst_folder, n_bands, namestart, nam
         dst_ds = driver.Create(tile_file, BLOCK_SIZE, BLOCK_SIZE, dst_nbands, dst_datatype)
         dst_ds.SetGeoTransform(gt)
         dst_ds.SetProjection(proj)
+        dst_ds.SetNoDataValue(noDataValue)
         if dst_nbands==1:
             dst_ds.GetRasterBand(1).WriteArray(tile_data)
         else:
@@ -264,7 +271,7 @@ if __name__ == "__main__":
             print(imageids)
             for image in imageids:
                 rasterfile = os.path.join(irrg_path, image + '_IRRG.TIF')
-                tiling_raster(rasterfile, wgs_bbox_list, irrg_tile_path, 3, region + '_' + str(year), image+'.tif')
+                tiling_raster(rasterfile, wgs_bbox_list, irrg_tile_path, 3, region + '_' + str(year), image+'_.tif')
             gtfile = os.path.join(gt_path, region + '_' + str(year) + '.tif')
             tiling_raster(gtfile, wgs_bbox_list, gt_tile_path, 1, region + '_' + str(year),'_label.tif')
             
