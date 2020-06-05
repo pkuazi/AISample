@@ -135,7 +135,7 @@ if __name__ == "__main__":
             print(imageids)
             for image in imageids:
                 rasterfile = os.path.join(irrg_path, image + '_IRRG.TIF')
-                tiling_raster(rasterfile, wgs_bbox_list, irrg_tile_path, 3, region + '_' + str(year), image+'_.tif')
+                tiling_raster(rasterfile, wgs_bbox_list, irrg_tile_path, 3, region + '_' + str(year), '_'+image+'.tif')
             gtfile = os.path.join(gt_path, region + '_' + str(year) + '.tif')
             tiling_raster(gtfile, wgs_bbox_list, gt_tile_path, 1, region + '_' + str(year),'_label.tif')
             
