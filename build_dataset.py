@@ -6,7 +6,7 @@ from shapely.geometry import mapping, Polygon
 import pandas as pd
 import utils.pgsql as pgsql
 import json
-from image_search_merge import region_search_dem,merge_all_dem
+# from image_search_merge import region_search_dem,merge_all_dem
 import numpy as np
 from gen_subtask_bbox import gen_tile_bbox,tile_bbox_to_shp
 from shp_into_pgsql import tasktiles_shp_into_pgsql
@@ -141,10 +141,91 @@ def sifting_tiling_grid(imageid, tileshp):
                 minx_wgs, maxy_wgs = GeomTrans('EPSG:4326', projection).transform_point([minx, maxy])
                 maxx_wgs, miny_wgs = GeomTrans('EPSG:4326', projection).transform_point([maxx, miny])
                 
+                
                 wgs_bbox_list.append([minx_wgs, maxy_wgs, maxx_wgs, miny_wgs, int(row), int(col)])
     return wgs_bbox_list
 
-        
+def get_image_bbox_withoutnodata(imagefile,dst_shp):
+#     reference function  root / databox_core/libdboxdataset/dboxdatasetutils.cpp -- CPLErr Databox::DBoxFindCorrds(GDALDataset *dboxdataset, std::vector<int> &corrds)
+    ds = gdal.Open(imagefile)
+    if ds is None:
+        print("Failed to open file: " + imagefile)
+        return
+    xsize = ds.RasterXSize
+    ysize = ds.RasterYSize
+    band = ds.GetRasterBand(1)
+    noDataValue = band.GetNoDataValue()#None
+    noDataValue=0
+    
+    proj = ds.GetProjectionRef()
+    values = band.ReadAsArray()
+    shape =values.shape
+    geotrans = ds.GetGeoTransform()
+    
+    coords = []
+#     left top corner
+    for yoff in range(0,ysize-1):
+        for xoff in range(0,xsize-1):
+            ival = values[yoff][xoff]#0
+            if ival != noDataValue:
+                print(xoff,yoff)
+                coords.append(xoff)
+                coords.append(yoff)
+                break
+        else:
+            continue
+        break
+    
+#     left bottom corner
+    for xoff in range(0,xsize-1):
+        for yoff in range(0,ysize-1):
+            ival = values[yoff][xoff]#
+            if ival != noDataValue:
+                coords.append(xoff)
+                coords.append(yoff)
+                break
+        else:
+            continue
+        break
+#     right top corner
+    for xoff in range(xsize-1, 0, -1):
+        for yoff in range(ysize-1, 0, -1):
+            ival = values[yoff][xoff]#
+            if ival != noDataValue:
+                coords.append(xoff)
+                coords.append(yoff)
+                break
+        else:
+            continue
+        break   
+#     right bottom corner
+    for yoff in range(ysize-1, 0, -1):
+        for xoff in range(xsize-1, 0, -1):
+            ival = values[yoff][xoff]#
+            if ival != noDataValue:
+                coords.append(xoff)
+                coords.append(yoff)
+                break
+        else:
+            continue
+        break
+    
+    ltx_wgs, lty_wgs = GeomTrans(proj, 'EPSG:4326').transform_point([geotrans[0]+ coords[0]*geotrans[1], geotrans[3]+coords[1]*geotrans[5]])
+    lbx_wgs, lby_wgs = GeomTrans(proj, 'EPSG:4326').transform_point([geotrans[0]+ coords[2]*geotrans[1], geotrans[3]+coords[3]*geotrans[5]])
+    rtx_wgs, rty_wgs = GeomTrans(proj, 'EPSG:4326').transform_point([geotrans[0]+ coords[4]*geotrans[1], geotrans[3]+coords[5]*geotrans[5]])
+    rbx_wgs, rby_wgs = GeomTrans(proj, 'EPSG:4326').transform_point([geotrans[0]+ coords[6]*geotrans[1], geotrans[3]+coords[7]*geotrans[5]])
+   
+    geom_wkt = 'POLYGON ((%s %s,%s %s,%s %s,%s %s,%s %s))'%(ltx_wgs, lty_wgs,rtx_wgs, rty_wgs,rbx_wgs, rby_wgs,lbx_wgs, lby_wgs,ltx_wgs, lty_wgs)
+    
+    schema = {'geometry': 'Polygon', 'properties': {'id': 'int'} }
+    with fiona.open(dst_shp, mode='w', driver='ESRI Shapefile', schema=schema, crs='EPSG:4326', encoding='utf-8') as layer:       
+        poly = Polygon([[ltx_wgs, lty_wgs], [rtx_wgs, rty_wgs], [rbx_wgs, rby_wgs], [lbx_wgs, lby_wgs], [ltx_wgs, lty_wgs]])
+        element = {'geometry':mapping(poly), 'properties': {'id': 1}}
+        layer.write(element) 
+        layer.close()
+    
+#     ogr.CreateGeometryFromWkt(geom_wkt)
+    return geom_wkt
 if __name__ == "__main__":
 # bj_2001: LT51230322001323BJC00  LT51230332001323BJC00
 
@@ -169,22 +250,34 @@ if __name__ == "__main__":
 # #         demfile = tiling_raster(region_dem_file, wgs_bbox_list, dem_tile_path, 1, region, '_dem.tif')
         
         for year in year_list:
-            tile_shp = os.path.join(region_bbox_path,(region + '_'+str(year)+'_'+'tiles.shp'))
-            wgs_bbox_list, rnum, cnum, region_bbox = gen_tile_bbox(region_file,BLOCK_SIZE, OVERLAP_SIZE)
-            tile_bbox_to_shp(wgs_bbox_list, rnum, cnum, tile_shp)
-            if not os.path.exists(tile_shp):
-                print('the tiling shapefile does not exists')
-                continue
+#             subtask--tiles into pgsql
+#             tile_shp = os.path.join(region_bbox_path,(region + '_'+str(year)+'_'+'tiles.shp'))
+#             wgs_bbox_list, rnum, cnum, region_bbox = gen_tile_bbox(region_file,BLOCK_SIZE, OVERLAP_SIZE)
+#             tile_bbox_to_shp(wgs_bbox_list, rnum, cnum, tile_shp)
+#             if not os.path.exists(tile_shp):
+#                 print('the tiling shapefile does not exists')
+#                 continue
             
             imageids = get_imageids(images_key=images_key, year=year)
-            task_title= region + '_'+str(year)
-            tasktiles_shp_into_pgsql(task_title, tile_shp, imageids)
+#             task_title= region + '_'+str(year)
+#             tasktiles_shp_into_pgsql(task_title, tile_shp, imageids)
 
             # gtfile = os.path.join(gt_path, region + '_' + str(year) + '.tif')
-            # print(imageids)
+            for image in reversed(imageids):
+#                 find all the tiles contained in the image bbox
+                imagefile = os.path.join(irrg_path, image + '_IRRG.TIF')
+                imagebbox = get_image_bbox_withoutnodata(imagefile,'/tmp/%s.shp'%image)
+                # import dboxio
+#                 with dboxio.Open(imagefile) as ds:
+#                     proj = ds.GetProjectionRef()
+#                     points = ds.TransformCorrds(ds.GetNoDataCorrds())
+# 
+#                     new_boundary_4326 = dboxio.transform_geom_as_geojson({"type": "Polygon", "coordinates": [[
+#                         points[:2], points[2:4], points[4:6], points[6:8], points[:2]
+#                     ]]}, proj, "EPSG:4326")
 #             for image in imageids:
-                # rasterfile = os.path.join(irrg_path, image + '_IRRG.TIF')
-                # print('the image to be tiling is',rasterfile)
+#                 
+#                 print('the image to be tiling is',rasterfile)
                 # wgs_bbox_list = sifting_tiling_grid(image, tile_shp)
                 # tiling_raster(rasterfile, wgs_bbox_list, irrg_tile_path,  3, region + '_' + str(year), '_'+image+'.tif')
                 # tiling_raster( gtfile,wgs_bbox_list, gt_tile_path,  1, region + '_' + str(year),'_label.tif')
@@ -193,7 +286,5 @@ if __name__ == "__main__":
            
             # tiling_raster(gtfile, wgs_bbox_list, gt_tile_path, 1, region + '_' + str(year),'_label.tif')  
 
-#         rasterfile = region_dict[region]['region']
-#         dst_shp = os.path.join('/tmp',region+'_subbox.shp')
-#         gen_subtask_bbox(rasterfile, region, dst_shp)
+
     

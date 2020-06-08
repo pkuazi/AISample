@@ -157,7 +157,31 @@ SET guid=%s, taskid=%s, ctime=%s, geojson=%s;
 
 
 if __name__ == '__main__':   
-    print('main')
+    print('test')
+    # bj_2001: LT51230322001323BJC00  LT51230332001323BJC00
+#     subtask tiles into pgsql
+#     for region in region_dict.keys():
+#         # region_tiles_shp = os.path.join(region_bbox_path,(region + '_subtiles.shp'))
+#             # region is one of the region_dict.keys()
+#         region_tif = region_dict[region]['region_tif']
+#         region_file = os.path.join(region_tif_path, region_tif)
+#         
+#         # print('row,col: %s, %s'%(rnum,cnum))
+#         images_key = region_dict[region]['images_key']
+#         year_list = region_dict[region]['year']
+#         
+#         for year in year_list:
+#             tile_shp = os.path.join(region_bbox_path,(region + '_'+str(year)+'_'+'tiles.shp'))
+#             wgs_bbox_list, rnum, cnum, region_bbox = gen_tile_bbox(region_file,BLOCK_SIZE, OVERLAP_SIZE)
+#             tile_bbox_to_shp(wgs_bbox_list, rnum, cnum, tile_shp)
+#             if not os.path.exists(tile_shp):
+#                 print('the tiling shapefile does not exists')
+#                 continue
+#             
+#             imageids = get_imageids(images_key=images_key, year=year)
+#             task_title= region + '_'+str(year)
+#             tasktiles_shp_into_pgsql(task_title, tile_shp, imageids)
+            
 #     with fiona.open(shp_file, 'r') as inp:
 #         projection = inp.crs_wkt
 #         
@@ -177,4 +201,3 @@ if __name__ == '__main__':
 #     #             source=1
 #                 if label == 4 or label == 5:
 #                     labels_into_pgsql(wkt, label, 'EPSG:4326')
-
