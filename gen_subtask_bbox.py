@@ -75,7 +75,8 @@ def tile_bbox_to_shp(wgs_bbox_list, rnum_tile,cnum_tile,region_tiles_shp):
             element = {'geometry':mapping(poly), 'properties': {'id': i * cnum_tile + j, 'row':i, 'col':j}}
             layer.write(element) 
         layer.close()
-        
+
+
 def gen_subtask_bbox_shp(rasterfile, tileid, dst_shp):
     print('the image is :', rasterfile)
     dataset = gdal.Open(rasterfile)
