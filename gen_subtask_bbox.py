@@ -3,6 +3,7 @@ import os
 from utils.geotrans import GeomTrans
 from shapely.geometry import mapping, Polygon
 import numpy as np
+import fiona
 
 BLOCK_SIZE=256
 OVERLAP_SIZE=13
@@ -64,7 +65,7 @@ def gen_tile_bbox(region_file,BLOCK_SIZE,OVERLAP_SIZE):
            
                         
     return wgs_bbox_list,rnum_tile,cnum_tile,region_bbox
-def tile_bbox_to_shp(wgs_bbox_list, region_tiles_shp):
+def tile_bbox_to_shp(wgs_bbox_list, rnum_tile,cnum_tile,region_tiles_shp):
      # schema is a dictory
     schema = {'geometry': 'Polygon', 'properties': {'id': 'int', 'row':'int', 'col':'int'} }
     with fiona.open(region_tiles_shp, mode='w', driver='ESRI Shapefile', schema=schema, crs='EPSG:4326', encoding='utf-8') as layer:
