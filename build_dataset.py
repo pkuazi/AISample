@@ -283,6 +283,8 @@ if __name__ == "__main__":
                 guid = tiles_list[i][0]
                 geojson = tiles_list[i][1]
                 imageid = tiles_list[i][2]
+                if imageid is None:
+                    continue
                 
                 imagefile = os.path.join(irrg_path, imageid + '_IRRG.TIF')
                 

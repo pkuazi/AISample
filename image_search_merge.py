@@ -262,39 +262,46 @@ def bbox_pd_sort(path):
     xs.to_csv('xs.csv')
 
 if __name__ == "__main__":
-    sh_minx=121.3015010490833561
-    sh_miny=30.6565199377234556 
-    sh_maxx=121.6328280392743011
-    sh_maxy=31.5169980147194799
-    sh_data = region_search_dem(sh_miny, sh_maxy, sh_minx, sh_maxx,'/tmp/sh.shp')
-    print('sh',len(sh_data))
-    merge_all_dem(sh_data,'/mnt/tmp/sh_dem.tif')
     
-    bj_minx=116.1680000000000064
-    bj_miny=39.4778999999999769
-    bj_maxx=116.5760000000000218
-    bj_maxy=40.5480000000000587
-    bj_data = region_search_dem(bj_miny, bj_maxy, bj_minx, bj_maxx,'/tmp/bj.shp')
-    merge_all_dem(bj_data,'/mnt/tmp/bj_dem.tif')
-    
-    pd_minx=119.5250070000000733
-    pd_miny=36.4714850000000794 
-    pd_maxx=120.3205460000000642
-    pd_maxy=37.0462860000000660
-    pd_data = region_search_dem(pd_miny, pd_maxy, pd_minx, pd_maxx,'/tmp/pd.shp')
-    merge_all_dem(pd_data,'/mnt/tmp/pd_dem.tif')
-    
-    db_minx=107.2476430000000676
-    db_miny=36.8159350000000600
-    db_maxx=108.3707290000000683
-    db_maxy=37.8878510000000830
-    db_data = region_search_dem(db_miny, db_maxy, db_minx, db_maxx,'/tmp/db.shp')
-    merge_all_dem(db_data,'/mnt/tmp/db_dem.tif')
-    
-    ys_minx=118.1789894702706363
-    ys_miny=35.5889882607407557
-    ys_maxx=119.0702794462647347
-    ys_maxy=36.2181116042871736
-    ys_data = region_search_dem(ys_miny, ys_maxy, ys_minx, ys_maxx,'/tmp/ys.shp')
-    merge_all_dem(ys_data,'/mnt/tmp/ys_dem.tif')
+    tiles_search_sql = '''SELECT guid, geojson, imageid FROM public.mark_subtask where id=7275;'''
+    print(tiles_search_sql)
+    data1 = pg_src.getAll(tiles_search_sql)
+    imageid = data1[0][2]
+    if imageid is None:
+        print('kkkk')
+#     sh_minx=121.3015010490833561
+#     sh_miny=30.6565199377234556 
+#     sh_maxx=121.6328280392743011
+#     sh_maxy=31.5169980147194799
+#     sh_data = region_search_dem(sh_miny, sh_maxy, sh_minx, sh_maxx,'/tmp/sh.shp')
+#     print('sh',len(sh_data))
+#     merge_all_dem(sh_data,'/mnt/tmp/sh_dem.tif')
+#     
+#     bj_minx=116.1680000000000064
+#     bj_miny=39.4778999999999769
+#     bj_maxx=116.5760000000000218
+#     bj_maxy=40.5480000000000587
+#     bj_data = region_search_dem(bj_miny, bj_maxy, bj_minx, bj_maxx,'/tmp/bj.shp')
+#     merge_all_dem(bj_data,'/mnt/tmp/bj_dem.tif')
+#     
+#     pd_minx=119.5250070000000733
+#     pd_miny=36.4714850000000794 
+#     pd_maxx=120.3205460000000642
+#     pd_maxy=37.0462860000000660
+#     pd_data = region_search_dem(pd_miny, pd_maxy, pd_minx, pd_maxx,'/tmp/pd.shp')
+#     merge_all_dem(pd_data,'/mnt/tmp/pd_dem.tif')
+#     
+#     db_minx=107.2476430000000676
+#     db_miny=36.8159350000000600
+#     db_maxx=108.3707290000000683
+#     db_maxy=37.8878510000000830
+#     db_data = region_search_dem(db_miny, db_maxy, db_minx, db_maxx,'/tmp/db.shp')
+#     merge_all_dem(db_data,'/mnt/tmp/db_dem.tif')
+#     
+#     ys_minx=118.1789894702706363
+#     ys_miny=35.5889882607407557
+#     ys_maxx=119.0702794462647347
+#     ys_maxy=36.2181116042871736
+#     ys_data = region_search_dem(ys_miny, ys_maxy, ys_minx, ys_maxx,'/tmp/ys.shp')
+#     merge_all_dem(ys_data,'/mnt/tmp/ys_dem.tif')
 
