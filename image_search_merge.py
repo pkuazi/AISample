@@ -5,6 +5,12 @@ from shapely.geometry import mapping, Polygon
 # pg_src = pgsql.Pgsql("10.0.81.35", "2345","postgres", "", "gscloud_metadata")
 pg_src = pgsql.Pgsql("10.0.81.19", "9999","postgres", "", "gscloud_web")
 
+def update_task_table(task_title):
+    region_shp=''
+    gtfile=''
+    task_update_sql = '''UPDATE public.mark_task SET geojson=%s, gtfile=%s title='%s';'''
+    pg_src.update(task_update_sql, (region_shp, gtfile, task_title))
+
 def region_query_tiles(imageid, imagebbox, task_title):
 #     query taskid
 #     query subtask contained in imagebbox ('POLYGON ((116 40,1179 413,117 39,116 39,116 40))')

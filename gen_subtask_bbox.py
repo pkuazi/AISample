@@ -8,6 +8,7 @@ import fiona
 BLOCK_SIZE=256
 OVERLAP_SIZE=13
 
+    
 def gen_tile_bbox(region_file,BLOCK_SIZE,OVERLAP_SIZE):
     print('the image is :', region_file)
     dataset = gdal.Open(region_file)
