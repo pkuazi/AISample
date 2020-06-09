@@ -2,7 +2,18 @@ import fiona
 import utils.pgsql as pgsql
 from shapely.geometry import mapping, Polygon
 
-pg_src = pgsql.Pgsql("10.0.81.35", "2345","postgres", "", "gscloud_metadata")
+# pg_src = pgsql.Pgsql("10.0.81.35", "2345","postgres", "", "gscloud_metadata")
+pg_src = pgsql.Pgsql("10.0.81.19", "9999","postgres", "", "gscloud_web")
+
+def region_query_tiles(imageid, imagebbox, task_title):
+#     query taskid
+#     query subtask contained in imagebbox ('POLYGON ((116 40,1179 413,117 39,116 39,116 40))')
+    task_search_sql = '''SELECT id FROM public.mark_task where title='%s';'''%(task_title)
+    data = pg_src.getAll(task_search_sql)
+    taskid = data[0][0]
+    tile_update_imageid_sql = '''UPDATE public.mark_subtask SET imageid=%s where taskid='%s' and ST_Contains(st_geomfromtext(%s), geojson);'''
+    pg_src.update(tile_update_imageid_sql, (imageid, taskid, imagebbox))
+   
 
 def image_query(product, geom, year, month):
     shp_file = '/mnt/win/data/AISample/region_bbox/bj_subbox.shp'

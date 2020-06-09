@@ -10,6 +10,7 @@ import json
 import numpy as np
 from gen_subtask_bbox import gen_tile_bbox,tile_bbox_to_shp
 from shp_into_pgsql import tasktiles_shp_into_pgsql
+from image_search_merge import region_query_tiles
 
 
 BLOCK_SIZE = 256
@@ -259,7 +260,7 @@ if __name__ == "__main__":
 #                 continue
             
             imageids = get_imageids(images_key=images_key, year=year)
-#             task_title= region + '_'+str(year)
+            task_title= region + '_'+str(year)
 #             tasktiles_shp_into_pgsql(task_title, tile_shp, imageids)
 
             # gtfile = os.path.join(gt_path, region + '_' + str(year) + '.tif')
@@ -267,6 +268,8 @@ if __name__ == "__main__":
 #                 find all the tiles contained in the image bbox
                 imagefile = os.path.join(irrg_path, image + '_IRRG.TIF')
                 imagebbox = get_image_bbox_withoutnodata(imagefile,'/tmp/%s.shp'%image)
+                
+                region_query_tiles(image, imagebbox, task_title)
                 # import dboxio
 #                 with dboxio.Open(imagefile) as ds:
 #                     proj = ds.GetProjectionRef()
