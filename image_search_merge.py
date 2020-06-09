@@ -13,7 +13,16 @@ def region_query_tiles(imageid, imagebbox, task_title):
     taskid = data[0][0]
     tile_update_imageid_sql = '''UPDATE public.mark_subtask SET imageid=%s where taskid='%s' and ST_Contains(st_geomfromtext(%s), geojson);'''
     pg_src.update(tile_update_imageid_sql, (imageid, taskid, imagebbox))
-   
+
+def query_tiles_by_tasktitle(task_title):
+    task_search_sql = '''SELECT id FROM public.mark_task where title='%s';'''%(task_title)
+    data = pg_src.getAll(task_search_sql)
+    taskid = data[0][0]
+    tiles_search_sql = '''SELECT guid, geojson, imageid FROM public.mark_subtask where taskid='%s';'''%(taskid)
+    print(tiles_search_sql)
+    data1 = pg_src.getAll(tiles_search_sql)
+#     print(data1)
+    return data1
 
 def image_query(product, geom, year, month):
     shp_file = '/mnt/win/data/AISample/region_bbox/bj_subbox.shp'
