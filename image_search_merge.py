@@ -24,7 +24,7 @@ def query_tiles_by_tasktitle(task_title):
     task_search_sql = '''SELECT id FROM public.mark_task where title='%s';'''%(task_title)
     data = pg_src.getAll(task_search_sql)
     taskid = data[0][0]
-    tiles_search_sql = '''SELECT guid, geojson, imageid FROM public.mark_subtask where taskid='%s';'''%(taskid)
+    tiles_search_sql = '''SELECT guid, geojson, imageid, sid FROM public.mark_subtask where taskid='%s';'''%(taskid)
     print(tiles_search_sql)
     data1 = pg_src.getAll(tiles_search_sql)
 #     print(data1)

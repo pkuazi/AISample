@@ -12,6 +12,7 @@ import numpy as np
 from gen_subtask_bbox import gen_tile_bbox, tile_bbox_to_shp
 from shp_into_pgsql import tasktiles_shp_into_pgsql
 from image_search_merge import region_query_tiles, query_tiles_by_tasktitle
+from _ast import Num
 
 BLOCK_SIZE = 256
 OVERLAP_SIZE = 13
@@ -158,10 +159,14 @@ def sifting_subtask_tile(task_title):
     taskid = data[0][0]
     task_region = data[0][1]
 #     region_geom = task_region['geometry']
-    
+    subtask_update_sql='''UPDATE public.mark_subtask SET sid=1 where taskid='%s' and ST_Contains(st_geomfromtext(%s), st_geomfromtext(geojson));'''
+    pg_src.update(subtask_update_sql, (taskid,task_region))
     subtask_search_sql = '''SELECT id FROM public.mark_subtask where taskid='%s' and ST_Contains(st_geomfromtext('%s'), st_geomfromtext(geojson));'''%(taskid,task_region)
+#     subtask_search_sql = '''SELECT id FROM public.mark_subtask where taskid='%s' and ST_Intersects(st_geomfromtext('%s'), st_geomfromtext(geojson));'''%(taskid,task_region)
     data1 = pg_src.getAll(subtask_search_sql)
     num = len(data1)
+    print(num)
+    return num
     
 
 def get_image_bbox_withoutnodata(imagefile, dst_shp):
@@ -298,47 +303,49 @@ def task_update():
             pg_src.update(task_update_sql, (task_wkt, gtfile, task_title))
 
 if __name__ == "__main__":
-    task_update()
 # # bj_2001: LT51230322001323BJC00  LT51230332001323BJC00
 #     pg_src = pgsql.Pgsql("10.0.81.19", "9999","postgres", "", "gscloud_web")
-#     for region in region_dict.keys():
-#         # region_tiles_shp = os.path.join(region_bbox_path,(region + '_subtiles.shp'))
-#             # region is one of the region_dict.keys()
-#         region_tif = region_dict[region]['region_tif']
-#         region_file = os.path.join(region_tif_path, region_tif)
-#         
-#         # print('row,col: %s, %s'%(rnum,cnum))
-#         images_key = region_dict[region]['images_key']
-#         year_list = region_dict[region]['year']
-#         
-# # #         region_minx=region_bbox[0]
-# # #         region_miny=region_bbox[3]
-# # #         region_maxx=region_bbox[2]
-# # #         region_maxy=region_bbox[1]
-# # #         region_data = region_search_dem(region_miny, region_maxy, region_minx, region_maxx)
-# # #         region_dem_file = os.path.join(dem_path,region+'_dem.tif')
-# # #         merge_all_dem(region_data,region_dem_file)
-# # #     
-# # #         demfile = tiling_raster(region_dem_file, wgs_bbox_list, dem_tile_path, 1, region, '_dem.tif')
-#         
-#         for year in year_list:
-# #             subtask--tiles into pgsql
-# #             tile_shp = os.path.join(region_bbox_path,(region + '_'+str(year)+'_'+'tiles.shp'))
-# #             wgs_bbox_list, rnum, cnum, region_bbox = gen_tile_bbox(region_file,BLOCK_SIZE, OVERLAP_SIZE)
-# #             
-# #             tasktiles_shp_into_pgsql(task_title, tile_shp, imageids)
-# #             tile_bbox_to_shp(wgs_bbox_list, rnum, cnum, tile_shp)
-# #             if not os.path.exists(tile_shp):
-# #                 print('the tiling shapefile does not exists')
-# #                 continue
+#     num_tiles = 0
+    for region in region_dict.keys():
+        # region_tiles_shp = os.path.join(region_bbox_path,(region + '_subtiles.shp'))
+            # region is one of the region_dict.keys()
+        region_tif = region_dict[region]['region_tif']
+        region_file = os.path.join(region_tif_path, region_tif)
+         
+        # print('row,col: %s, %s'%(rnum,cnum))
+        images_key = region_dict[region]['images_key']
+        year_list = region_dict[region]['year']
+         
+# #         region_minx=region_bbox[0]
+# #         region_miny=region_bbox[3]
+# #         region_maxx=region_bbox[2]
+# #         region_maxy=region_bbox[1]
+# #         region_data = region_search_dem(region_miny, region_maxy, region_minx, region_maxx)
+# #         region_dem_file = os.path.join(dem_path,region+'_dem.tif')
+# #         merge_all_dem(region_data,region_dem_file)
+# #     
+# #         demfile = tiling_raster(region_dem_file, wgs_bbox_list, dem_tile_path, 1, region, '_dem.tif')
+         
+        for year in year_list:
+#             subtask--tiles into pgsql
+#             tile_shp = os.path.join(region_bbox_path,(region + '_'+str(year)+'_'+'tiles.shp'))
+#             wgs_bbox_list, rnum, cnum, region_bbox = gen_tile_bbox(region_file,BLOCK_SIZE, OVERLAP_SIZE)
 #             
-# #             imageids = get_imageids(images_key=images_key, year=year)
-#             task_title = region + '_' + str(year)
-# #             sifting_subtask_tile(task_title)
+#             tasktiles_shp_into_pgsql(task_title, tile_shp, imageids)
+#             tile_bbox_to_shp(wgs_bbox_list, rnum, cnum, tile_shp)
+#             if not os.path.exists(tile_shp):
+#                 print('the tiling shapefile does not exists')
+#                 continue
+             
+#             imageids = get_imageids(images_key=images_key, year=year)
+            task_title = region + '_' + str(year)
+#             num = sifting_subtask_tile(task_title)
+#             num_tiles +=num
+#     print('the totle number of tiles is ',num_tiles)
 # #             wgs_bbox_list, rnum, cnum, region_bbox = gen_subtask_in_db(task_title,BLOCK_SIZE, OVERLAP_SIZE)
 # #             
 # #             print(task_title)
-#             gtfile = os.path.join(gt_path, region + '_' + str(year) + '.tif')
+            gtfile = os.path.join(gt_path, region + '_' + str(year) + '.tif')
 # #             
 #             region_shp=os.path.join(region_shp_path, region+'_wgs.geojson')
 #             
@@ -355,24 +362,25 @@ if __name__ == "__main__":
 #             task_update_sql = '''UPDATE public.mark_task SET geojson=%s, gtfile=%s where title=%s;'''
 #             pg_src.update(task_update_sql, (task_wkt, gtfile, task_title))
             
-#             tiles_list = query_tiles_by_tasktitle(task_title)
+            tiles_list = query_tiles_by_tasktitle(task_title)
 # #             DictRow: ['bj_2001_02_03', 'POLYGON ((116.414767331843 40.4163919701254,116.505793909987 40.4163919701254,116.505793909987 40.3476266055874,116.414767331843 40.3476266055874,116.414767331843 40.4163919701254))', 'LT51230322001323BJC00']
-#             for i in range(len(tiles_list)):
-#                 guid = tiles_list[i][0]
-#                 geojson = tiles_list[i][1]
-#                 imageid = tiles_list[i][2]
-#                 if imageid is None:
-#                     continue
+            for i in range(len(tiles_list)):
+                guid = tiles_list[i][0]
+                geojson = tiles_list[i][1]
+                imageid = tiles_list[i][2]
+                sid = tiles_list[i][3]
+                if imageid is None or sid!=1:
+                    continue
 #                 
-#                 imagefile = os.path.join(irrg_path, imageid + '_IRRG.TIF')
+                imagefile = os.path.join(irrg_path, imageid + '_IRRG.TIF')
 #                 
-#                 row=int(guid[-5:-3])
-#                 col=int(guid[-2:])
-#                 
-#                 geom = ogr.CreateGeometryFromWkt(geojson)
-#                 minx_wgs, maxx_wgs, miny_wgs,maxy_wgs =geom.GetEnvelope()
-#                 wgs_bbox_list = []
-#                 wgs_bbox_list.append([minx_wgs, maxy_wgs, maxx_wgs, miny_wgs, row, col])          
+                row=int(guid[-5:-3])
+                col=int(guid[-2:])
+                 
+                geom = ogr.CreateGeometryFromWkt(geojson)
+                minx_wgs, maxx_wgs, miny_wgs,maxy_wgs =geom.GetEnvelope()
+                wgs_bbox_list = []
+                wgs_bbox_list.append([minx_wgs, maxy_wgs, maxx_wgs, miny_wgs, row, col])          
 
             
 #             for image in reversed(imageids):
@@ -386,8 +394,8 @@ if __name__ == "__main__":
 #                 
 #                 print('the image to be tiling is',rasterfile)
                 # wgs_bbox_list = sifting_tiling_grid(image, tile_shp)
-#                 tiling_raster(imagefile, wgs_bbox_list, irrg_tile_path,  3, region + '_' + str(year), '_'+imageid+'.tif')
-#                 tiling_raster(gtfile,wgs_bbox_list, gt_tile_path,  1, region + '_' + str(year),'_label.tif')
+                tiling_raster(imagefile, wgs_bbox_list, irrg_tile_path,  3, region + '_' + str(year), '_'+imageid+'.tif')
+                tiling_raster(gtfile,wgs_bbox_list, gt_tile_path,  1, region + '_' + str(year),'_label.tif')
                             
                 # tiling_raster(rasterfile, wgs_bbox_list, irrg_tile_path, 3, region + '_' + str(year), '_'+image+'.tif')
            
