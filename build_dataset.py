@@ -12,7 +12,6 @@ import numpy as np
 from gen_subtask_bbox import gen_tile_bbox, tile_bbox_to_shp
 from shp_into_pgsql import tasktiles_shp_into_pgsql
 from image_search_merge import region_query_tiles, query_tiles_by_tasktitle
-from _ast import Num
 
 BLOCK_SIZE = 256
 OVERLAP_SIZE = 13
