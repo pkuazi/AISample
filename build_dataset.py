@@ -473,7 +473,7 @@ if __name__ == "__main__":
 #          
 #         # print('row,col: %s, %s'%(rnum,cnum))
         images_key = region_dict[region]['images_key']
-#         year_list = region_dict[region]['year']
+        year_list = region_dict[region]['year']
 #          
 # # #         region_minx=region_bbox[0]
 # # #         region_miny=region_bbox[3]
