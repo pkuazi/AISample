@@ -447,11 +447,11 @@ def check_image_resolution(imagefile):
     
     if gt[1]!=RESOLUTION:
         target_file = '/tmp/birrg_30.tif'
-        resampling(outfile, target_file, scale=gt[1]/RESOLUTION)
-        rm_cmd = 'rm -rf %s'%outfile
+        resampling(imagefile, target_file, scale=gt[1]/RESOLUTION)
+        rm_cmd = 'rm -rf %s'%imagefile
         print(rm_cmd)
         os.system(rm_cmd)
-        mv_cmd = 'mv %s %s'%(target_file,outfile)
+        mv_cmd = 'mv %s %s'%(target_file,imagefile)
         print(mv_cmd)
         os.system(mv_cmd)
 if __name__ == "__main__":
