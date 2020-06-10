@@ -557,7 +557,7 @@ if __name__ == "__main__":
                 # wgs_bbox_list = sifting_tiling_grid(image, tile_shp)
 #                 tiling_raster(imagefile, wgs_bbox_list, irrg_tile_path,  3, region + '_' + str(year), '_'+imageid+'.tif')
 #                 tiling_raster(gtfile,wgs_bbox_list, gt_tile_path,  1, region + '_' + str(year),'_label.tif')
-            merge_cmd1 = 'gdalwarp -srsnodata 0 %s %s'%(srcfiles1, dstfile_path)
+            merge_cmd1 = 'gdalwarp -srcnodata 0 %s %s'%(srcfiles1, dstfile_path)
             os.system(merge_cmd1)                 
                 # tiling_raster(rasterfile, wgs_bbox_list, irrg_tile_path, 3, region + '_' + str(year), '_'+image+'.tif')
            
