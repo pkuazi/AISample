@@ -455,24 +455,24 @@ def check_image_resolution(imagefile):
         print(mv_cmd)
         os.system(mv_cmd)
 if __name__ == "__main__":
-    irrg_files = os.listdir(irrg_path)
-    for irrg_file in irrg_files:
-        if irrg_file.endswith('_IRRG.TIF'):
-            imagefile = os.path.join(irrg_path,irrg_file)
-            check_image_resolution(imagefile)
-    tiling_for_dataset()
+#     irrg_files = os.listdir(irrg_path)
+#     for irrg_file in irrg_files:
+#         if irrg_file.endswith('_IRRG.TIF'):
+#             imagefile = os.path.join(irrg_path,irrg_file)
+#             check_image_resolution(imagefile)
+#     tiling_for_dataset()
             
 # # bj_2001: LT51230322001323BJC00  LT51230332001323BJC00
 #     pg_src = pgsql.Pgsql("10.0.81.19", "9999","postgres", "", "gscloud_web")
 #     num_tiles = 0
-#     for region in region_dict.keys():
+    for region in region_dict.keys():
 #         # region_tiles_shp = os.path.join(region_bbox_path,(region + '_subtiles.shp'))
 #             # region is one of the region_dict.keys()
 #         region_tif = region_dict[region]['region_tif']
 #         region_file = os.path.join(region_tif_path, region_tif)
 #          
 #         # print('row,col: %s, %s'%(rnum,cnum))
-#         images_key = region_dict[region]['images_key']
+        images_key = region_dict[region]['images_key']
 #         year_list = region_dict[region]['year']
 #          
 # # #         region_minx=region_bbox[0]
@@ -485,7 +485,8 @@ if __name__ == "__main__":
 # # #     
 # # #         demfile = tiling_raster(region_dem_file, wgs_bbox_list, dem_tile_path, 1, region, '_dem.tif')
 #          
-#         for year in year_list:
+        for year in year_list:
+            imageids = get_imageids(images_key=images_key, year=year)
 # #             subtask--tiles into pgsql
 # #             tile_shp = os.path.join(region_bbox_path,(region + '_'+str(year)+'_'+'tiles.shp'))
 # #             wgs_bbox_list, rnum, cnum, region_bbox = gen_tile_bbox(region_file,BLOCK_SIZE, OVERLAP_SIZE)
@@ -547,14 +548,17 @@ if __name__ == "__main__":
 #                 imagebbox = get_image_bbox_withoutnodata(imagefile,'/tmp/%s.shp'%image)
 #                 
 #                 region_query_tiles(image, imagebbox, task_title)
-
-#             for image in imageids:
-#                 
+            srcfiles1 = ''
+            dstfile_path = '/tmp/%s_%s.TIF'%(region,year)
+            for image in imageids:
+                srcfiles1 = srcfiles1+os.path.join(irrg_path, image + '_IRRG.TIF')
+                srcfiles1 = srcfiles1+' '
 #                 print('the image to be tiling is',rasterfile)
                 # wgs_bbox_list = sifting_tiling_grid(image, tile_shp)
 #                 tiling_raster(imagefile, wgs_bbox_list, irrg_tile_path,  3, region + '_' + str(year), '_'+imageid+'.tif')
 #                 tiling_raster(gtfile,wgs_bbox_list, gt_tile_path,  1, region + '_' + str(year),'_label.tif')
-                            
+            merge_cmd1 = 'gdalwarp %s %s'%(srcfiles1, dstfile_path)
+            os.system(merge_cmd1)                 
                 # tiling_raster(rasterfile, wgs_bbox_list, irrg_tile_path, 3, region + '_' + str(year), '_'+image+'.tif')
            
             # tiling_raster(gtfile, wgs_bbox_list, gt_tile_path, 1, region + '_' + str(year),'_label.tif')  
