@@ -434,7 +434,7 @@ def subtask_update_imageid_sid():
              
 
 if __name__ == "__main__":
-    subtask_update_imageid_sid()
+    tiling_for_dataset()
 # # bj_2001: LT51230322001323BJC00  LT51230332001323BJC00
 #     pg_src = pgsql.Pgsql("10.0.81.19", "9999","postgres", "", "gscloud_web")
 #     num_tiles = 0
