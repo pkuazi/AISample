@@ -154,8 +154,16 @@ SET guid=%s, taskid=%s, ctime=%s, geojson=%s;
                 else:
                     pg_src.update(update_sql, (guid, taskid, ctime, wkt))
                     print("insert subtask tile of ", guid)            
-
-
+def get_taskid_by_tasktitle(task_title):
+    task_search_sql = '''SELECT id FROM public.mark_task where title='%s';'''%(task_title)
+    data = pg_src.getAll(task_search_sql)
+    taskid = data[0][0]    
+    return taskid    
+def get_wkt_by_tasktitle(task_title):
+    task_search_sql = '''SELECT geojson FROM public.mark_task where title='%s';'''%(task_title)
+    data = pg_src.getAll(task_search_sql)
+    region_wkt = data[0][0]    
+    return region_wkt  
 if __name__ == '__main__':   
     print('test')
     # bj_2001: LT51230322001323BJC00  LT51230332001323BJC00
