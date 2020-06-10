@@ -550,7 +550,7 @@ if __name__ == "__main__":
 #                 region_query_tiles(image, imagebbox, task_title)
             srcfiles1 = ''
             dstfile_path = '/tmp/%s_%s.TIF'%(region,year)
-            for image in imageids:
+            for image in reversed(imageids):
                 srcfiles1 = srcfiles1+os.path.join(irrg_path, image + '_IRRG.TIF')
                 srcfiles1 = srcfiles1+' '
 #                 print('the image to be tiling is',rasterfile)
