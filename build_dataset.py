@@ -12,7 +12,7 @@ import numpy as np
 from gen_subtask_bbox import gen_tile_bbox, tile_bbox_to_shp
 from shp_into_pgsql import tasktiles_shp_into_pgsql,gjson_geotrans_to_wgs84,get_curtime,get_taskid_by_tasktitle,get_wkt_by_tasktitle
 from image_search_merge import region_query_tiles, query_tiles_by_tasktitle
-
+from utils.resampling import resampling
 
 BLOCK_SIZE = 256
 OVERLAP_SIZE = 13
