@@ -76,9 +76,9 @@ def tiling_raster(rasterfile, wgs_bbox_list, dst_folder, n_bands, namestart, nam
     geotrans = dataset.GetGeoTransform()
     gt = list(geotrans)
     
-    if gt[1]!=30:
+    if gt[1]!=RESOLUTION:
         target_file = '/tmp/birrg_30.tif'
-        resampling(rasterfile, target_file, scale=2.0)
+        resampling(rasterfile, target_file, scale=gt[1]/RESOLUTION)
         dataset = gdal.Open(target_file)
     
     band = dataset.GetRasterBand(1)
