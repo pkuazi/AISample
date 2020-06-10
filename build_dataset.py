@@ -12,10 +12,11 @@ import numpy as np
 from gen_subtask_bbox import gen_tile_bbox, tile_bbox_to_shp
 from shp_into_pgsql import tasktiles_shp_into_pgsql,gjson_geotrans_to_wgs84,get_curtime,get_taskid_by_tasktitle,get_wkt_by_tasktitle
 from image_search_merge import region_query_tiles, query_tiles_by_tasktitle
+from utils.resampling import resampling
 
 BLOCK_SIZE = 256
 OVERLAP_SIZE = 13
-
+RESOLUTION=30.0
 region_dict = {'bj':{'region_tif':'bj.tif', 'year':[2001, 2003, 2004], 'images_key':'bj'},
                'cd':{'region_tif':'cd.tif', 'year':[1990, 2000, 2010, 2015], 'images_key':'cd_zjk'},
                'liangji':{'region_tif':'liangji.tif', 'year':[2015], 'images_key':'liangji'},
@@ -71,12 +72,20 @@ def tiling_raster(rasterfile, wgs_bbox_list, dst_folder, n_bands, namestart, nam
         print("Failed to open file: " + rasterfile)
 #         sys.exit(1)
         return
+    
+    geotrans = dataset.GetGeoTransform()
+    gt = list(geotrans)
+    
+    if gt[1]!=30:
+        target_file = '/tmp/birrg_30.tif'
+        resampling(rasterfile, target_file, scale=2.0)
+        dataset = gdal.Open(target_file)
+    
     band = dataset.GetRasterBand(1)
     xsize = dataset.RasterXSize
     ysize = dataset.RasterYSize
     proj = dataset.GetProjection()
-    geotrans = dataset.GetGeoTransform()
-    gt = list(geotrans)
+    
     noDataValue = band.GetNoDataValue()
       
     for wgs_bbox in wgs_bbox_list:
@@ -119,7 +128,9 @@ def tiling_raster(rasterfile, wgs_bbox_list, dst_folder, n_bands, namestart, nam
                 tile_data[i][tile_data[i] == noDataValue] = -9999
                 dst_ds.GetRasterBand(i + 1).WriteArray(tile_data[i])
         del dst_ds
-
+    if os.path.exists('/tmp/birrg_30.tif'):
+        cmd = 'rm -rf /tmp/birrg_30.tif'
+        os.system(cmd)
 
 def sifting_tiling_grid(imageid, tileshp):
 # by properties of imageid and cloud
@@ -435,6 +446,7 @@ def subtask_update_imageid_sid():
 
 if __name__ == "__main__":
     tiling_for_dataset()
+            
 # # bj_2001: LT51230322001323BJC00  LT51230332001323BJC00
 #     pg_src = pgsql.Pgsql("10.0.81.19", "9999","postgres", "", "gscloud_web")
 #     num_tiles = 0

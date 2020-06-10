@@ -6,6 +6,8 @@ irrg_path = os.path.join(ROOT_PATH,'BANDS_IRRG')
 # imageid_path = os.path.join(ROOT_PATH,'IMAGE')
 # imageids_file = os.path.join(imageid_path,'imageids.csv')
 
+
+
 image_path = os.path.join(ROOT_PATH,'BANDS_ALL')
 files = os.listdir(image_path)
 file_with = {'LM1':{'IR' :'_B6', 'R' : '_B5', 'G' : '_B4'},'LM2':{'IR' :'_B6', 'R' : '_B5', 'G' : '_B4'},'LM3':{'IR' :'_B6', 'R' : '_B5', 'G' : '_B4'}, 'LT5':{'IR':'_B4', 'R' : '_B3', 'G' : '_B2'}, 'LE7':{'IR' :'_B4', 'R' : '_B3', 'G' :'_B2'}, 'LC8':{'IR' : '_B5', 'R' : '_B4', 'G' : '_B3'}}
