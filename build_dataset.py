@@ -12,7 +12,7 @@ import numpy as np
 from gen_subtask_bbox import gen_tile_bbox, tile_bbox_to_shp
 from shp_into_pgsql import tasktiles_shp_into_pgsql,gjson_geotrans_to_wgs84,get_curtime,get_taskid_by_tasktitle,get_wkt_by_tasktitle
 from image_search_merge import region_query_tiles, query_tiles_by_tasktitle
-from utils.resampling import resampling
+
 
 BLOCK_SIZE = 256
 OVERLAP_SIZE = 13
@@ -76,11 +76,6 @@ def tiling_raster(rasterfile, wgs_bbox_list, dst_folder, n_bands, namestart, nam
     geotrans = dataset.GetGeoTransform()
     gt = list(geotrans)
     
-    if gt[1]!=RESOLUTION:
-        target_file = '/tmp/birrg_30.tif'
-        resampling(rasterfile, target_file, scale=gt[1]/RESOLUTION)
-        dataset = gdal.Open(target_file)
-    
     band = dataset.GetRasterBand(1)
     xsize = dataset.RasterXSize
     ysize = dataset.RasterYSize
@@ -128,9 +123,6 @@ def tiling_raster(rasterfile, wgs_bbox_list, dst_folder, n_bands, namestart, nam
                 tile_data[i][tile_data[i] == noDataValue] = -9999
                 dst_ds.GetRasterBand(i + 1).WriteArray(tile_data[i])
         del dst_ds
-    if os.path.exists('/tmp/birrg_30.tif'):
-        cmd = 'rm -rf /tmp/birrg_30.tif'
-        os.system(cmd)
 
 def sifting_tiling_grid(imageid, tileshp):
 # by properties of imageid and cloud
@@ -443,8 +435,31 @@ def subtask_update_imageid_sid():
             subtask_update_sql='''UPDATE public.mark_subtask SET sid=1 where taskid='%s' and ST_Contains(st_geomfromtext(%s), st_geomfromtext(geojson));'''
             pg_src.update(subtask_update_sql, (taskid,task_region))
              
-
+def check_image_resolution(imagefile):
+    dataset = gdal.Open(imagefile)
+    if dataset is None:
+        print("Failed to open file: " + imagefile)
+#         sys.exit(1)
+        return
+    
+    geotrans = dataset.GetGeoTransform()
+    gt = list(geotrans)
+    
+    if gt[1]!=RESOLUTION:
+        target_file = '/tmp/birrg_30.tif'
+        resampling(outfile, target_file, scale=gt[1]/RESOLUTION)
+        rm_cmd = 'rm -rf %s'%outfile
+        print(rm_cmd)
+        os.system(rm_cmd)
+        mv_cmd = 'mv %s %s'%(target_file,outfile)
+        print(mv_cmd)
+        os.system(mv_cmd)
 if __name__ == "__main__":
+    irrg_files = os.listdir(irrg_path)
+    for irrg_file in irrg_files:
+        if irrg_file.endswith('_IRRG.TIF'):
+            imagefile = os.path.join(irrg_path,irrg_file)
+            check_image_resolution(imagefile)
     tiling_for_dataset()
             
 # # bj_2001: LT51230322001323BJC00  LT51230332001323BJC00

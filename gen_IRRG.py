@@ -1,4 +1,5 @@
 import os
+from utils.resampling import resampling
 
 ROOT_PATH = '/mnt/rsimages/lulc/AISample'
 irrg_path = os.path.join(ROOT_PATH,'BANDS_IRRG')
@@ -6,7 +7,7 @@ irrg_path = os.path.join(ROOT_PATH,'BANDS_IRRG')
 # imageid_path = os.path.join(ROOT_PATH,'IMAGE')
 # imageids_file = os.path.join(imageid_path,'imageids.csv')
 
-
+RESOLUTION = 30.0
 
 image_path = os.path.join(ROOT_PATH,'BANDS_ALL')
 files = os.listdir(image_path)
@@ -26,5 +27,8 @@ for file in files:
     outfile = os.path.join(irrg_path,file+'_IRRG.TIF')
     cmd = 'gdal_merge.py -tap -separate -a_nodata %s -o  %s -of GTiff %s %s %s'%(np.Nan,outfile, bandir, bandr, bandg)
     os.system(cmd)
-                   
+    
+    
 
+                   
+        
