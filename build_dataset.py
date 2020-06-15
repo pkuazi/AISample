@@ -103,7 +103,7 @@ def tiling_raster(rasterfile, wgs_bbox_list, dst_folder, n_bands, namestart, nam
         
         gt[0] = minx
         gt[3] = maxy
-        
+        tile_data.astype(np.float32)
         tile_file = os.path.join(dst_folder, tile_name)
 #         xsize, ysize = tile_data[0].shape
         dst_format = 'GTiff'
