@@ -25,7 +25,7 @@ for file in files:
             bandg = os.path.join(file_path, bandf)
                         
     outfile = os.path.join(irrg_path,file+'_IRRG.TIF')
-    cmd = 'gdal_merge.py -tap -separate -o  %s -of GTiff %s %s %s'%(np.Nan,outfile, bandir, bandr, bandg)
+    cmd = 'gdal_merge.py -tap -separate -o  %s -of GTiff %s %s %s'%(outfile, bandir, bandr, bandg)
     os.system(cmd)
     
     
