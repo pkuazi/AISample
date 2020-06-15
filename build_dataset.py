@@ -64,7 +64,65 @@ def get_imageids(images_key, year):
     print(idlist)
     return idlist
 
+def wktlist_tiling_raster(rasterfile, wkt_list, dst_folder, n_bands, namestart, nameend):
+    print('start tiling the image :', rasterfile)
+    dataset = gdal.Open(rasterfile)
+    if dataset is None:
+        print("Failed to open file: " + rasterfile)
+#         sys.exit(1)
+        return
+    
+    geotrans = dataset.GetGeoTransform()
+    gt = list(geotrans)
+    
+    band = dataset.GetRasterBand(1)
+    xsize = dataset.RasterXSize
+    ysize = dataset.RasterYSize
+    proj = dataset.GetProjection()
+    
+    noDataValue = band.GetNoDataValue()
+    dataType = band.DataType
+      
+    for wkt_poly in wkt_list:
+        wgs_poly, i, j = wkt_poly[0], wkt_poly[1], wkt_poly[2]
+        row = '0' + str(i)           
+        col = '0' + str(j)  
+        print('the current tiling location is ', i, j)
+#         tile_name = region + str(year) + '_'+row[-2:] + col[-2:] + '_' + tileid + '.tif'
+        tile_name = namestart + '_' + row[-2:] + col[-2:] + nameend
+        poly = GeomTrans('EPSG:4326', proj).transform_wkt(wgs_poly)
+       
         
+        xoff = int((minx - geotrans[0]) / geotrans[1])
+        yoff = int((maxy - geotrans[3]) / geotrans[5])
+        
+        if xoff < 0 or yoff < 0 or xoff + BLOCK_SIZE > xsize or yoff + BLOCK_SIZE > ysize:
+            continue
+        
+        tile_data = dataset.ReadAsArray(xoff, yoff, BLOCK_SIZE, BLOCK_SIZE)
+        
+        gt[0] = minx
+        gt[3] = maxy
+    
+        tile_file = os.path.join(dst_folder, tile_name)
+#         xsize, ysize = tile_data[0].shape
+        dst_format = 'GTiff'
+        dst_nbands = n_bands
+        dst_datatype = dataType
+    
+        driver = gdal.GetDriverByName(dst_format)
+        dst_ds = driver.Create(tile_file, BLOCK_SIZE, BLOCK_SIZE, dst_nbands, dst_datatype)
+        dst_ds.SetGeoTransform(gt)
+        dst_ds.SetProjection(proj)
+
+        if dst_nbands == 1:
+#             tile_data[tile_data == noDataValue] = np.NaN
+            dst_ds.GetRasterBand(1).WriteArray(tile_data)
+        else:
+            for i in range(dst_nbands):
+#                 tile_data[i][tile_data[i] == noDataValue] = np.NaN
+                dst_ds.GetRasterBand(i + 1).WriteArray(tile_data[i])
+        del dst_ds     
 def tiling_raster(rasterfile, wgs_bbox_list, dst_folder, n_bands, namestart, nameend):
     print('start tiling the image :', rasterfile)
     dataset = gdal.Open(rasterfile)
@@ -447,9 +505,7 @@ def gen_random_samplepts():
                 minx_wgs, maxx_wgs, miny_wgs,maxy_wgs =geom.GetEnvelope()
                 pt_x = random.uniform(minx_wgs, maxx_wgs)
                 pt_y = random.uniform(miny_wgs, maxy_wgs)
-                
-                
-                
+                                            
 def subtask_update_imageid_sid():
     pg_src = pgsql.Pgsql("10.0.81.19", "9999","postgres", "", "gscloud_web")
     for region in region_dict.keys():
@@ -499,13 +555,25 @@ def check_image_resolution(imagefile):
         print(mv_cmd)
         os.system(mv_cmd)
 if __name__ == "__main__":
-#     irrg_files = os.listdir(irrg_path)
-#     for irrg_file in irrg_files:
-#         if irrg_file.endswith('_IRRG.TIF'):
-#             imagefile = os.path.join(irrg_path,irrg_file)
-#             check_image_resolution(imagefile)
-    tiling_for_dataset()
-            
+    irrg_files = os.listdir(irrg_path)
+    for irrg_file in irrg_files:
+        if irrg_file.endswith('_IRRG.TIF'):
+            imagefile = os.path.join(irrg_path,irrg_file)
+            check_image_resolution(imagefile)
+#     tiling_for_dataset()
+#     sql = '''select geojson, imageid from mark_subtask where guid like 'mws_1978_45_24';'''
+#     data = pg_src.getAll(sql)
+#     geojson = data[0][0]
+#     imageid = data[0][1]
+#     imagefile = os.path.join(irrg_path, imageid + '_IRRG.TIF')
+#     row=45
+#     col=24
+#     geom = ogr.CreateGeometryFromWkt(geojson)
+#     minx_wgs, maxx_wgs, miny_wgs,maxy_wgs =geom.GetEnvelope()
+#     wgs_bbox_list = []
+#     wgs_bbox_list.append([minx_wgs, maxy_wgs, maxx_wgs, miny_wgs, row, col])  
+#     tiling_raster(imagefile, wgs_bbox_list, irrg_tile_path,  3, region + '_' + str(year), '_'+imageid+'.tif')
+                 
 # # bj_2001: LT51230322001323BJC00  LT51230332001323BJC00
 #     pg_src = pgsql.Pgsql("10.0.81.19", "9999","postgres", "", "gscloud_web")
 #     num_tiles = 0
