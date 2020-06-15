@@ -82,6 +82,7 @@ def tiling_raster(rasterfile, wgs_bbox_list, dst_folder, n_bands, namestart, nam
     proj = dataset.GetProjection()
     
     noDataValue = band.GetNoDataValue()
+    dataType = band.DataType
       
     for wgs_bbox in wgs_bbox_list:
         minx_wgs, maxy_wgs, maxx_wgs, miny_wgs, i, j = wgs_bbox[0], wgs_bbox[1], wgs_bbox[2], wgs_bbox[3], wgs_bbox[4], wgs_bbox[5]
@@ -103,12 +104,12 @@ def tiling_raster(rasterfile, wgs_bbox_list, dst_folder, n_bands, namestart, nam
         
         gt[0] = minx
         gt[3] = maxy
-        tile_data.astype(np.float32)
+    
         tile_file = os.path.join(dst_folder, tile_name)
 #         xsize, ysize = tile_data[0].shape
         dst_format = 'GTiff'
         dst_nbands = n_bands
-        dst_datatype = gdal.GDT_Float32
+        dst_datatype = dataType
     
         driver = gdal.GetDriverByName(dst_format)
         dst_ds = driver.Create(tile_file, BLOCK_SIZE, BLOCK_SIZE, dst_nbands, dst_datatype)
@@ -116,11 +117,11 @@ def tiling_raster(rasterfile, wgs_bbox_list, dst_folder, n_bands, namestart, nam
         dst_ds.SetProjection(proj)
 
         if dst_nbands == 1:
-            tile_data[tile_data == noDataValue] = np.NaN
+#             tile_data[tile_data == noDataValue] = np.NaN
             dst_ds.GetRasterBand(1).WriteArray(tile_data)
         else:
             for i in range(dst_nbands):
-                tile_data[i][tile_data[i] == noDataValue] = np.NaN
+#                 tile_data[i][tile_data[i] == noDataValue] = np.NaN
                 dst_ds.GetRasterBand(i + 1).WriteArray(tile_data[i])
         del dst_ds
         
