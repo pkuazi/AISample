@@ -359,7 +359,7 @@ def task_update():
             task_update_sql = '''UPDATE public.mark_task SET geojson=%s, gtfile=%s,image=%s where title=%s;'''
             pg_src.update(task_update_sql, (task_wkt, gtfile, imageids, task_title))
 def proj_image(imagefile, gt_file, outfile):
-    ds = gdal.Open(region_dem_file)
+    ds = gdal.Open(imagefile)
     in_proj = ds.GetProjection()
     gt_ds = gdal.Open(gt_file)
     out_proj = gt_ds.GetProjection()
