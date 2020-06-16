@@ -403,7 +403,7 @@ def tiling_for_dataset():
 #                 
                 imagefile = os.path.join(irrg_path, imageid + '_IRRG.TIF')
                 outfile = '/tmp/%s_IRRG.TIF'%(imageid)
-                proj_image(imagefile, gt_file, outfile)
+                proj_image(imagefile, gtfile, outfile)
                 demfile = os.path.join(dem30_path,region+'_'+str(year)+'_dem.tif')
 #                 
                 row=int(guid[-5:-3])
@@ -623,10 +623,10 @@ def gen_task():
             task_title= region + '_'+str(year)
             tasktiles_shp_into_pgsql(task_title, tile_shp, imageids)
 if __name__ == "__main__":
-    task_update()
-    gen_subtask()
+#     task_update()
+#     gen_subtask()
 #     process_dem()
-    subtask_update_imageid_sid()
+#     subtask_update_imageid_sid()
     tiling_for_dataset()
 #     sql = '''select geojson, imageid from mark_subtask where guid like 'mws_1978_45_24';'''
 #     data = pg_src.getAll(sql)
