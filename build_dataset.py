@@ -582,8 +582,8 @@ if __name__ == "__main__":
 #             imagefile = os.path.join(irrg_path,irrg_file)
 #             check_image_resolution(imagefile)
 #     tiling_for_dataset()
-#     process_dem()
-    gen_subtask()
+    process_dem()
+#     gen_subtask()
 #     sql = '''select geojson, imageid from mark_subtask where guid like 'mws_1978_45_24';'''
 #     data = pg_src.getAll(sql)
 #     geojson = data[0][0]
