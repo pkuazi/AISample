@@ -370,17 +370,7 @@ def tiling_for_dataset():
         # print('row,col: %s, %s'%(rnum,cnum))
         images_key = region_dict[region]['images_key']
         year_list = region_dict[region]['year']
-          
-# #         region_minx=region_bbox[0]
-# #         region_miny=region_bbox[3]
-# #         region_maxx=region_bbox[2]
-# #         region_maxy=region_bbox[1]
-# #         region_data = region_search_dem(region_miny, region_maxy, region_minx, region_maxx)
-# #         region_dem_file = os.path.join(dem_path,region+'_dem.tif')
-# #         merge_all_dem(region_data,region_dem_file)
-# #     
-# #         demfile = tiling_raster(region_dem_file, wgs_bbox_list, dem_tile_path, 1, region, '_dem.tif')
-          
+                   
         for year in year_list:
             task_title = region + '_' + str(year)
 
@@ -397,6 +387,7 @@ def tiling_for_dataset():
                     continue
 #                 
                 imagefile = os.path.join(irrg_path, imageid + '_IRRG.TIF')
+                demfile = os.path.join(dem30_path,region+'_'+str(year)+'_dem.tif')
 #                 
                 row=int(guid[-5:-3])
                 col=int(guid[-2:])
@@ -405,8 +396,9 @@ def tiling_for_dataset():
                 minx_wgs, maxx_wgs, miny_wgs,maxy_wgs =geom.GetEnvelope()
                 wgs_bbox_list = []
                 wgs_bbox_list.append([minx_wgs, maxy_wgs, maxx_wgs, miny_wgs, row, col])  
-                tiling_raster(imagefile, wgs_bbox_list, irrg_tile_path,  3, region + '_' + str(year), '_'+imageid+'.tif')
-                tiling_raster(gtfile,wgs_bbox_list, gt_tile_path,  1, region + '_' + str(year),'_label.tif')
+#                 tiling_raster(imagefile, wgs_bbox_list, irrg_tile_path,  3, region + '_' + str(year), '_'+imageid+'.tif')
+#                 tiling_raster(gtfile,wgs_bbox_list, gt_tile_path,  1, region + '_' + str(year),'_label.tif')
+                tiling_raster(demfile,wgs_bbox_list, dem_tile_path,  1, region + '_' + str(year),'_dem.tif')
 def gen_subtask():  
     pg_src = pgsql.Pgsql("10.0.81.19", "9999","postgres", "", "gscloud_web")
     for region in region_dict.keys():
@@ -566,15 +558,25 @@ def resample_dem(region_dem_file, region_file, outfile):
     proj_cmd = "gdalwarp -t_srs %s %s %s" % (dst_srs, region_dem_file, outfile) 
     os.system(proj_cmd)
     check_image_resolution(outfile)
-    
-    
+
+def process_dem():
+    for region in region_dict.keys():
+        region_tif = region_dict[region]['region_tif']
+        region_file = os.path.join(region_tif_path, region_tif)
+        year_list = region_dict[region]['year']          
+        for year in year_list:
+            region_dem_file = os.path.join(dem_path,region+'_'+str(year)+'_dem.tif')
+            outfile = os.path.join(dem30_path,region+'_'+str(year)+'_dem.tif')
+            merge_all_dem(region_data,region_dem_file)
+            resample_dem(region_dem_file, region_file,outfile)
+            
 if __name__ == "__main__":
 #     irrg_files = os.listdir(irrg_path)
 #     for irrg_file in irrg_files:
 #         if irrg_file.endswith('_IRRG.TIF'):
 #             imagefile = os.path.join(irrg_path,irrg_file)
 #             check_image_resolution(imagefile)
-#     tiling_for_dataset()
+    tiling_for_dataset()
 #     sql = '''select geojson, imageid from mark_subtask where guid like 'mws_1978_45_24';'''
 #     data = pg_src.getAll(sql)
 #     geojson = data[0][0]
@@ -591,16 +593,16 @@ if __name__ == "__main__":
 # # bj_2001: LT51230322001323BJC00  LT51230332001323BJC00
 #     pg_src = pgsql.Pgsql("10.0.81.19", "9999","postgres", "", "gscloud_web")
 #     num_tiles = 0
-    for region in region_dict.keys():
+#     for region in region_dict.keys():
 #         # region_tiles_shp = os.path.join(region_bbox_path,(region + '_subtiles.shp'))
 #             # region is one of the region_dict.keys()
-        region_tif = region_dict[region]['region_tif']
-        region_file = os.path.join(region_tif_path, region_tif)
+#         region_tif = region_dict[region]['region_tif']
+#         region_file = os.path.join(region_tif_path, region_tif)
 #          
 #         # print('row,col: %s, %s'%(rnum,cnum))
 #         images_key = region_dict[region]['images_key']
-        year_list = region_dict[region]['year']          
-        for year in year_list:
+#         year_list = region_dict[region]['year']          
+#         for year in year_list:
 #             imageids = get_imageids(images_key=images_key, year=year)
 #             subtask--tiles into pgsql
 #             tile_shp = os.path.join(region_bbox_path,(region + '_'+str(year)+'_'+'tiles.shp'))
@@ -610,10 +612,10 @@ if __name__ == "__main__":
 #             region_maxx=region_bbox[2]
 #             region_maxy=region_bbox[1]
 #             region_data = region_search_dem(region_miny, region_maxy, region_minx, region_maxx)
-            region_dem_file = os.path.join(dem_path,region+'_'+str(year)+'_dem.tif')
-            outfile = os.path.join(dem30_path,region+'_'+str(year)+'_dem.tif')
+#             region_dem_file = os.path.join(dem_path,region+'_'+str(year)+'_dem.tif')
+#             outfile = os.path.join(dem30_path,region+'_'+str(year)+'_dem.tif')
 #             merge_all_dem(region_data,region_dem_file)
-            resample_dem(region_dem_file, region_file,outfile)
+#             resample_dem(region_dem_file, region_file,outfile)
 #             tiling_raster(region_dem_file, wgs_bbox_list, dem_tile_path,  1, region + '_' + str(year), '_'+'dem'+'.tif')
 # #             
 # #             tasktiles_shp_into_pgsql(task_title, tile_shp, imageids)
