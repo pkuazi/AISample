@@ -599,7 +599,7 @@ if __name__ == "__main__":
             region_data = region_search_dem(region_miny, region_maxy, region_minx, region_maxx)
             region_dem_file = os.path.join(dem_path,region+'_'+str(year)+'_dem.tif')
             merge_all_dem(region_data,region_dem_file)
-            check_image_resolution(region_dem_file)
+#             check_image_resolution(region_dem_file)
 #             tiling_raster(region_dem_file, wgs_bbox_list, dem_tile_path,  1, region + '_' + str(year), '_'+'dem'+'.tif')
 # #             
 # #             tasktiles_shp_into_pgsql(task_title, tile_shp, imageids)
