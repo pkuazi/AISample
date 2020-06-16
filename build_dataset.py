@@ -17,18 +17,7 @@ from utils.resampling import resampling
 BLOCK_SIZE = 256
 OVERLAP_SIZE = 13
 RESOLUTION=30.0
-# region_dict = {'bj':{'region_tif':'bj.tif', 'year':[2001, 2003, 2004], 'images_key':'bj'},
-#                'cd':{'region_tif':'cd.tif', 'year':[1990, 2000, 2010, 2015], 'images_key':'cd_zjk'},
-#                'liangji':{'region_tif':'liangji.tif', 'year':[2015], 'images_key':'liangji'},
-#                'mws':{'region_tif': 'mws.tif', 'year':[1978, 2000, 2015], 'images_key':'mws'},
-#                'PD':{'region_tif': 'PD.tif', 'year':[1995, 2005, 2015], 'images_key':'PD'},
-#                'shanghai':{'region_tif':'shanghai.tif', 'year':[2006, 2009], 'images_key':'shanghai'},
-#                "sjz":{'region_tif': 'sjz.tif', 'year':[2013], 'images_key':'sjz'},
-#                'wuhan':{'region_tif':'wuhan.tif', 'year':[2015], 'images_key':'wuhan'},
-#                'xiaoshan':{'region_tif': 'xiaoshan.tif', 'year':[1996, 2001, 2006, 2013], 'images_key':'xiaoshan'},
-#                'yishui':{'region_tif':'yishui.tif', 'year':[1995, 2005, 2015], 'images_key':'yishui'},
-#                'zjk':{'region_tif': 'zjk.tif', 'year':[1990, 2000, 2010, 2015], 'images_key':'cd_zjk'},
-#                }
+
 region_dict = {'bj':{ 'year':[2001, 2003, 2004], 'images_key':'bj'},
                'cd':{ 'year':[1990, 2000, 2010, 2015], 'images_key':'cd_zjk'},
                'liangji':{ 'year':[2015], 'images_key':'liangji'},
@@ -616,10 +605,28 @@ def process_irrg():
         if irrg_file.endswith('_IRRG.TIF'):
             imagefile = os.path.join(irrg_path,irrg_file)
             check_image_resolution(imagefile)
+            
+def gen_task():
+    for region in region_dict.keys():
+        images_key = region_dict[region]['images_key']
+        year_list = region_dict[region]['year']
+#          
+        for year in year_list:
+            tile_shp = os.path.join(region_bbox_path,(region + '_'+str(year)+'_'+'tiles.shp'))
+#             wgs_bbox_list, rnum, cnum, region_bbox = gen_tile_bbox(region_file,BLOCK_SIZE, OVERLAP_SIZE)
+#             tile_bbox_to_shp(wgs_bbox_list, rnum, cnum, tile_shp)
+            if not os.path.exists(tile_shp):
+                print('the tiling shapefile does not exists')
+                continue
+#              
+            imageids = get_imageids(images_key=images_key, year=year)
+            task_title= region + '_'+str(year)
+            tasktiles_shp_into_pgsql(task_title, tile_shp, imageids)
 if __name__ == "__main__":
 #     gen_subtask()
+#     task_update()
 #     process_dem()
-#     subtask_update_imageid_sid()
+    subtask_update_imageid_sid()
     tiling_for_dataset()
 #     sql = '''select geojson, imageid from mark_subtask where guid like 'mws_1978_45_24';'''
 #     data = pg_src.getAll(sql)
