@@ -404,8 +404,11 @@ def tiling_for_dataset():
                 imagefile = os.path.join(irrg_path, imageid + '_IRRG.TIF')
                 outfile = '/tmp/%s_IRRG.TIF'%(imageid)
                 proj_image(imagefile, gtfile, outfile)
+                
                 demfile = os.path.join(dem30_path,region+'_'+str(year)+'_dem.tif')
-#                 
+                outfile = '/tmp/%s_dem.TIF'%(region+'_'+str(year))
+                proj_image(demfile, gtfile, outfile)
+#
                 row=int(guid[-5:-3])
                 col=int(guid[-2:])
                   
