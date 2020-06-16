@@ -107,6 +107,7 @@ def region_search_dem_toshp(min_lat, max_lat, min_long, max_long, dst_shp):
     return  dataid_list  
 
 def region_search_dem(min_lat, max_lat, min_long, max_long):
+    pg_src = pgsql.Pgsql("10.0.81.35", "2345","postgres", "", "gscloud_metadata")
     data_sql = '''SELECT id, dataid, name, "path", "row",  lt_long, lt_lat,  rb_long, rb_lat,the_geom FROM public.metadata_dem_gdem where rb_long>%s and lt_long<%s and rb_lat<%s and lt_lat>%s ORDER BY row DESC;'''%(min_long,max_long,max_lat,min_lat)
     dem_data = pg_src.getAll(data_sql)
     num = len(dem_data)
