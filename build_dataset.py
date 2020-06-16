@@ -369,7 +369,25 @@ def task_update():
             
             task_update_sql = '''UPDATE public.mark_task SET geojson=%s, gtfile=%s,image=%s where title=%s;'''
             pg_src.update(task_update_sql, (task_wkt, gtfile, imageids, task_title))
+def proj_image(imagefile, gt_file, outfile):
+    ds = gdal.Open(region_dem_file)
+    in_proj = ds.GetProjection()
+    gt_ds = gdal.Open(gt_file)
+    out_proj = gt_ds.GetProjection()
+    
+    inSpatialRef = osr.SpatialReference()
+    inSpatialRef.SetFromUserInput(in_proj)
+      
+    outSpatialRef = osr.SpatialReference()
+    outSpatialRef.SetFromUserInput(out_proj)       
 
+    if inSpatialRef.IsSame(self.outSpatialRef) == 0:
+        proj_cmd = "gdalwarp -t_srs %s %s %s" % (out_proj, imagefile, outfile) 
+        os.system(proj_cmd)
+    else:
+        outfile=imagefile
+    
+    
 def tiling_for_dataset():
     for region in region_dict.keys():
         # region_tiles_shp = os.path.join(region_bbox_path,(region + '_subtiles.shp'))
@@ -395,6 +413,8 @@ def tiling_for_dataset():
                     continue
 #                 
                 imagefile = os.path.join(irrg_path, imageid + '_IRRG.TIF')
+                outfile = '/tmp/%s_IRRG.TIF'%(imageid)
+                proj_image(imagefile, gt_file, outfile)
                 demfile = os.path.join(dem30_path,region+'_'+str(year)+'_dem.tif')
 #                 
                 row=int(guid[-5:-3])
@@ -404,8 +424,8 @@ def tiling_for_dataset():
                 minx_wgs, maxx_wgs, miny_wgs,maxy_wgs =geom.GetEnvelope()
                 wgs_bbox_list = []
                 wgs_bbox_list.append([minx_wgs, maxy_wgs, maxx_wgs, miny_wgs, row, col])  
-#                 tiling_raster(imagefile, wgs_bbox_list, irrg_tile_path,  3, region + '_' + str(year), '_'+imageid+'.tif')
-#                 tiling_raster(gtfile,wgs_bbox_list, gt_tile_path,  1, region + '_' + str(year),'_label.tif')
+                tiling_raster(outfile, wgs_bbox_list, irrg_tile_path,  3, region + '_' + str(year), '_'+imageid+'.tif')
+                tiling_raster(gtfile,wgs_bbox_list, gt_tile_path,  1, region + '_' + str(year),'_label.tif')
                 tiling_raster(demfile,wgs_bbox_list, dem_tile_path,  1, region + '_' + str(year),'_dem.tif')
 def gen_subtask():  
     pg_src = pgsql.Pgsql("10.0.81.19", "9999","postgres", "", "gscloud_web")
@@ -556,10 +576,10 @@ def check_image_resolution(imagefile):
         print(mv_cmd)
         os.system(mv_cmd)
         
-def resample_dem(region_dem_file, region_file, outfile):
+def resample_dem(region_dem_file, gt_file, outfile):
     ds = gdal.Open(region_dem_file)
     src_srs = ds.GetProjection()
-    gt_ds = gdal.Open(region_file)
+    gt_ds = gdal.Open(gt_file)
     dst_srs = gt_ds.GetProjection()
     proj_cmd = "gdalwarp -t_srs %s %s %s" % (dst_srs, region_dem_file, outfile) 
     os.system(proj_cmd)
@@ -598,10 +618,9 @@ def process_irrg():
             check_image_resolution(imagefile)
 if __name__ == "__main__":
 #     gen_subtask()
-#     tiling_for_dataset()
 #     process_dem()
-    subtask_update_imageid_sid()
-
+#     subtask_update_imageid_sid()
+    tiling_for_dataset()
 #     sql = '''select geojson, imageid from mark_subtask where guid like 'mws_1978_45_24';'''
 #     data = pg_src.getAll(sql)
 #     geojson = data[0][0]
