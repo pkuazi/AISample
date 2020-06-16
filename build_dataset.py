@@ -55,6 +55,8 @@ dem_tile_path = os.path.join(ROOT_PATH,'TILE_DEM')
 if not os.path.exists(dem_tile_path):
     os.system('mkdir %s'%dem_tile_path)
     
+dem30_path = os.path.join(ROOT_PATH,'DEM30')
+    
 def get_imageids(images_key, year):
 #     images_key is the images_key in region_dict, year is year in region_dict
     imageids_data = pd.read_csv(imageids_file)
@@ -555,6 +557,17 @@ def check_image_resolution(imagefile):
         mv_cmd = 'mv %s %s'%(target_file,imagefile)
         print(mv_cmd)
         os.system(mv_cmd)
+        
+def resample_dem(region_dem_file, region_file, outfile):
+    ds = gdal.Open(region_dem_file)
+    src_srs = ds.GetProjection()
+    gt_ds = gdal.Open(region_file)
+    dst_srs = gt_ds.GetProjection()
+    proj_cmd = "gdalwarp -t_srs %s %s %s" % (dst_srs, region_dem_file, outfile) 
+    os.system(proj_cmd)
+    check_image_resolution(outfile)
+    
+    
 if __name__ == "__main__":
 #     irrg_files = os.listdir(irrg_path)
 #     for irrg_file in irrg_files:
@@ -590,16 +603,17 @@ if __name__ == "__main__":
         for year in year_list:
 #             imageids = get_imageids(images_key=images_key, year=year)
 #             subtask--tiles into pgsql
-            tile_shp = os.path.join(region_bbox_path,(region + '_'+str(year)+'_'+'tiles.shp'))
-            wgs_bbox_list, rnum, cnum, region_bbox = gen_tile_bbox(region_file,BLOCK_SIZE, OVERLAP_SIZE)
-            region_minx=region_bbox[0]
-            region_miny=region_bbox[3]
-            region_maxx=region_bbox[2]
-            region_maxy=region_bbox[1]
-            region_data = region_search_dem(region_miny, region_maxy, region_minx, region_maxx)
+#             tile_shp = os.path.join(region_bbox_path,(region + '_'+str(year)+'_'+'tiles.shp'))
+#             wgs_bbox_list, rnum, cnum, region_bbox = gen_tile_bbox(region_file,BLOCK_SIZE, OVERLAP_SIZE)
+#             region_minx=region_bbox[0]
+#             region_miny=region_bbox[3]
+#             region_maxx=region_bbox[2]
+#             region_maxy=region_bbox[1]
+#             region_data = region_search_dem(region_miny, region_maxy, region_minx, region_maxx)
             region_dem_file = os.path.join(dem_path,region+'_'+str(year)+'_dem.tif')
-            merge_all_dem(region_data,region_dem_file)
-#             check_image_resolution(region_dem_file)
+            outfile = os.path.join(dem30_path,region+'_'+str(year)+'_dem.tif')
+#             merge_all_dem(region_data,region_dem_file)
+            resample_dem(region_dem_file, region_file,outfile)
 #             tiling_raster(region_dem_file, wgs_bbox_list, dem_tile_path,  1, region + '_' + str(year), '_'+'dem'+'.tif')
 # #             
 # #             tasktiles_shp_into_pgsql(task_title, tile_shp, imageids)
