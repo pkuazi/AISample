@@ -10,13 +10,13 @@ import json
 # from image_search_merge import region_search_dem,merge_all_dem
 import numpy as np
 from gen_subtask_bbox import gen_tile_bbox, tile_bbox_to_shp
-from shp_into_pgsql import tasktiles_shp_into_pgsql,gjson_geotrans_to_wgs84,get_curtime,get_taskid_by_tasktitle,get_wkt_by_tasktitle
-from image_search_merge import region_query_tiles, query_tiles_by_tasktitle,region_search_dem,merge_all_dem
+from shp_into_pgsql import tasktiles_shp_into_pgsql, gjson_geotrans_to_wgs84, get_curtime, get_taskid_by_tasktitle, get_wkt_by_tasktitle
+from image_search_merge import region_query_tiles, query_tiles_by_tasktitle, region_search_dem, merge_all_dem
 from utils.resampling import resampling
 
 BLOCK_SIZE = 256
 OVERLAP_SIZE = 13
-RESOLUTION=30.0
+RESOLUTION = 30.0
 
 region_dict = {'bj':{ 'year':[2001, 2003, 2004], 'images_key':'bj'},
                'cd':{ 'year':[1990, 2000, 2010, 2015], 'images_key':'cd_zjk'},
@@ -33,7 +33,7 @@ region_dict = {'bj':{ 'year':[2001, 2003, 2004], 'images_key':'bj'},
 ROOT_PATH = '/mnt/rsimages/lulc/AISample'
 # ROOT_PATH = '/mnt/win/data/AISample/'
 # region_tif_path = os.path.join(ROOT_PATH, 'region_raster')
-region_shp_path = os.path.join(ROOT_PATH,'region_shp')
+region_shp_path = os.path.join(ROOT_PATH, 'region_shp')
 region_bbox_path = os.path.join(ROOT_PATH, 'region_bbox')
 if not os.path.exists(region_bbox_path):
     os.system('mkdir %s' % region_bbox_path)
@@ -51,12 +51,13 @@ gt_tile_path = os.path.join(ROOT_PATH, 'TILE_GT')
 if not os.path.exists(gt_tile_path):
     os.system('mkdir %s' % gt_tile_path)
 
-dem_path = os.path.join(ROOT_PATH,'DEM')
-dem_tile_path = os.path.join(ROOT_PATH,'TILE_DEM')
+dem_path = os.path.join(ROOT_PATH, 'DEM')
+dem_tile_path = os.path.join(ROOT_PATH, 'TILE_DEM')
 if not os.path.exists(dem_tile_path):
-    os.system('mkdir %s'%dem_tile_path)
+    os.system('mkdir %s' % dem_tile_path)
     
-dem30_path = os.path.join(ROOT_PATH,'DEM30')
+dem30_path = os.path.join(ROOT_PATH, 'DEM30')
+
     
 def get_imageids(images_key, year):
 #     images_key is the images_key in region_dict, year is year in region_dict
@@ -67,6 +68,7 @@ def get_imageids(images_key, year):
     idlist = imageids.tolist()
     print(idlist)
     return idlist
+
 
 def wktlist_tiling_raster(rasterfile, wkt_list, dst_folder, n_bands, namestart, nameend):
     print('start tiling the image :', rasterfile)
@@ -95,7 +97,6 @@ def wktlist_tiling_raster(rasterfile, wkt_list, dst_folder, n_bands, namestart, 
 #         tile_name = region + str(year) + '_'+row[-2:] + col[-2:] + '_' + tileid + '.tif'
         tile_name = namestart + '_' + row[-2:] + col[-2:] + nameend
         poly = GeomTrans('EPSG:4326', proj).transform_wkt(wgs_poly)
-       
         
         xoff = int((minx - geotrans[0]) / geotrans[1])
         yoff = int((maxy - geotrans[3]) / geotrans[5])
@@ -127,6 +128,8 @@ def wktlist_tiling_raster(rasterfile, wkt_list, dst_folder, n_bands, namestart, 
 #                 tile_data[i][tile_data[i] == noDataValue] = np.NaN
                 dst_ds.GetRasterBand(i + 1).WriteArray(tile_data[i])
         del dst_ds     
+
+
 def tiling_raster(rasterfile, wgs_bbox_list, dst_folder, n_bands, namestart, nameend):
     print('start tiling the image :', rasterfile)
     dataset = gdal.Open(rasterfile)
@@ -218,17 +221,19 @@ def sifting_tiling_grid(imageid, tileshp):
                 
                 wgs_bbox_list.append([minx_wgs, maxy_wgs, maxx_wgs, miny_wgs, int(row), int(col)])
     return wgs_bbox_list
+
+
 def sifting_subtask_tile(task_title):
     import utils.pgsql as pgsql
-    pg_src = pgsql.Pgsql("10.0.81.19", "9999","postgres", "", "gscloud_web")
-    task_search_sql = '''SELECT id, geojson FROM public.mark_task where title='%s';'''%(task_title)
+    pg_src = pgsql.Pgsql("10.0.81.19", "9999", "postgres", "", "gscloud_web")
+    task_search_sql = '''SELECT id, geojson FROM public.mark_task where title='%s';''' % (task_title)
     data = pg_src.getAll(task_search_sql)
     taskid = data[0][0]
     task_region = data[0][1]
 #     region_geom = task_region['geometry']
-    subtask_update_sql='''UPDATE public.mark_subtask SET sid=1 where taskid='%s' and ST_Contains(st_geomfromtext(%s), st_geomfromtext(geojson));'''
-    pg_src.update(subtask_update_sql, (taskid,task_region))
-    subtask_search_sql = '''SELECT id FROM public.mark_subtask where taskid='%s' and ST_Contains(st_geomfromtext('%s'), st_geomfromtext(geojson));'''%(taskid,task_region)
+    subtask_update_sql = '''UPDATE public.mark_subtask SET sid=1 where taskid='%s' and ST_Contains(st_geomfromtext(%s), st_geomfromtext(geojson));'''
+    pg_src.update(subtask_update_sql, (taskid, task_region))
+    subtask_search_sql = '''SELECT id FROM public.mark_subtask where taskid='%s' and ST_Contains(st_geomfromtext('%s'), st_geomfromtext(geojson));''' % (taskid, task_region)
 #     subtask_search_sql = '''SELECT id FROM public.mark_subtask where taskid='%s' and ST_Intersects(st_geomfromtext('%s'), st_geomfromtext(geojson));'''%(taskid,task_region)
     data1 = pg_src.getAll(subtask_search_sql)
     num = len(data1)
@@ -326,8 +331,9 @@ def get_image_bbox_withoutnodata(imagefile, dst_shp):
 #     ogr.CreateGeometryFromWkt(geom_wkt)
     return geom_wkt
 
+
 def task_update():
-    pg_src = pgsql.Pgsql("10.0.81.19", "9999","postgres", "", "gscloud_web")
+    pg_src = pgsql.Pgsql("10.0.81.19", "9999", "postgres", "", "gscloud_web")
     for region in region_dict.keys():
         # region_tiles_shp = os.path.join(region_bbox_path,(region + '_subtiles.shp'))
             # region is one of the region_dict.keys()
@@ -340,11 +346,11 @@ def task_update():
             
             task_title = region + '_' + str(year)
           
-            region_shp=os.path.join(region_shp_path, region+'_wgs.geojson')
+            region_shp = os.path.join(region_shp_path, region + '_wgs.geojson')
             
             print(region_shp)
-            with open(region_shp, "r") as f:    #打开文件
-                data = f.read()   #读
+            with open(region_shp, "r") as f:  # 打开文件
+                data = f.read()  # 读
                 
             task_geojson = json.loads(data)
             geom_json = json.dumps(task_geojson['features'][0]['geometry'])
@@ -358,6 +364,8 @@ def task_update():
             
             task_update_sql = '''UPDATE public.mark_task SET geojson=%s, gtfile=%s,image=%s where title=%s;'''
             pg_src.update(task_update_sql, (task_wkt, gtfile, imageids, task_title))
+
+
 def proj_image(imagefile, gt_file, outfile):
     ds = gdal.Open(imagefile)
     in_proj = ds.GetProjection()
@@ -373,8 +381,8 @@ def proj_image(imagefile, gt_file, outfile):
     if inSpatialRef.IsSame(outSpatialRef) == 0:
         proj_cmd = "gdalwarp -t_srs %s %s %s" % (out_proj, imagefile, outfile) 
         os.system(proj_cmd)
-    else:
-        outfile=imagefile
+        mv_cmd = 'mv %s %s'%(outfile, imagefile)
+        os.system(mv_cmd)
     
     
 def tiling_for_dataset():
@@ -398,33 +406,34 @@ def tiling_for_dataset():
                 geojson = tiles_list[i][1]
                 imageid = tiles_list[i][2]
                 sid = tiles_list[i][3]
-                if imageid is None or sid!=1:
+                if imageid is None or sid != 1:
                     continue
 #                 
                 imagefile = os.path.join(irrg_path, imageid + '_IRRG.TIF')
-                outimagefile = '/tmp/%s_IRRG.TIF'%(imageid)
+                outimagefile = '/tmp/%s_IRRG.TIF' % (imageid)
                 proj_image(imagefile, gtfile, outimagefile)
                 
-                demfile = os.path.join(dem30_path,region+'_'+str(year)+'_dem.tif')
-                outdemfile = '/tmp/%s_dem.TIF'%(region+'_'+str(year))
+                demfile = os.path.join(dem30_path, region + '_' + str(year) + '_dem.tif')
+                outdemfile = '/tmp/%s_dem.TIF' % (region + '_' + str(year))
                 proj_image(demfile, gtfile, outdemfile)
 #
-                row=int(guid[-5:-3])
-                col=int(guid[-2:])
+                row = int(guid[-5:-3])
+                col = int(guid[-2:])
                   
                 geom = ogr.CreateGeometryFromWkt(geojson)
-                minx_wgs, maxx_wgs, miny_wgs,maxy_wgs =geom.GetEnvelope()
+                minx_wgs, maxx_wgs, miny_wgs, maxy_wgs = geom.GetEnvelope()
                 wgs_bbox_list = []
                 wgs_bbox_list.append([minx_wgs, maxy_wgs, maxx_wgs, miny_wgs, row, col])  
-                tiling_raster(outimagefile, wgs_bbox_list, irrg_tile_path,  3, region + '_' + str(year), '_'+imageid+'.tif')
-                tiling_raster(gtfile,wgs_bbox_list, gt_tile_path,  1, region + '_' + str(year),'_label.tif')
-                tiling_raster(outdemfile,wgs_bbox_list, dem_tile_path,  1, region + '_' + str(year),'_dem.tif')
+                tiling_raster(imagefile, wgs_bbox_list, irrg_tile_path, 3, region + '_' + str(year), '_' + imageid + '.tif')
+                tiling_raster(gtfile, wgs_bbox_list, gt_tile_path, 1, region + '_' + str(year), '_label.tif')
+                tiling_raster(demfile, wgs_bbox_list, dem_tile_path, 1, region + '_' + str(year), '_dem.tif')
+
+
 def gen_subtask():  
-    pg_src = pgsql.Pgsql("10.0.81.19", "9999","postgres", "", "gscloud_web")
+    pg_src = pgsql.Pgsql("10.0.81.19", "9999", "postgres", "", "gscloud_web")
     for region in region_dict.keys():
         # region_tiles_shp = os.path.join(region_bbox_path,(region + '_subtiles.shp'))
             # region is one of the region_dict.keys()
-
           
         # print('row,col: %s, %s'%(rnum,cnum))
         images_key = region_dict[region]['images_key']
@@ -436,8 +445,8 @@ def gen_subtask():
             imageids = get_imageids(images_key=images_key, year=year)
             gtfile = os.path.join(gt_path, region + '_' + str(year) + '.tif')
             
-            tile_shp = os.path.join(region_bbox_path,(region + '_'+str(year)+'_'+'tiles.shp'))
-            wgs_bbox_list, rnum, cnum, region_bbox = gen_tile_bbox(gtfile,BLOCK_SIZE, OVERLAP_SIZE)
+            tile_shp = os.path.join(region_bbox_path, (region + '_' + str(year) + '_' + 'tiles.shp'))
+            wgs_bbox_list, rnum, cnum, region_bbox = gen_tile_bbox(gtfile, BLOCK_SIZE, OVERLAP_SIZE)
             tile_bbox_to_shp(wgs_bbox_list, rnum, cnum, tile_shp)
 #             tasktiles_shp_into_pgsql(task_title, tile_shp, imageids)
             sql = "select id from public.mark_task where title='%s' " % (task_title)
@@ -460,7 +469,7 @@ def gen_subtask():
                         
                         row_s = '0' + str(row)           
                         col_s = '0' + str(col) 
-                        guid = task_title+'_'+row_s[-2:] + '_' + col_s[-2:]
+                        guid = task_title + '_' + row_s[-2:] + '_' + col_s[-2:]
                         ctime = get_curtime()
                         
                         insert_sql = '''INSERT INTO public.mark_subtask
@@ -481,11 +490,11 @@ def gen_subtask():
                             pg_src.update(update_sql, (guid, taskid, ctime, wkt))
                             print("insert subtask tile of ", guid)      
 
+
 def gen_random_samplepts():
     for region in region_dict.keys():
         # region_tiles_shp = os.path.join(region_bbox_path,(region + '_subtiles.shp'))
             # region is one of the region_dict.keys()
-
           
         # print('row,col: %s, %s'%(rnum,cnum))
         images_key = region_dict[region]['images_key']
@@ -513,19 +522,19 @@ def gen_random_samplepts():
                 geojson = tiles_list[i][1]
                 imageid = tiles_list[i][2]
                 sid = tiles_list[i][3]
-                if imageid is None or sid!=1:
+                if imageid is None or sid != 1:
                     continue
                 geom = ogr.CreateGeometryFromWkt(geojson)
-                minx_wgs, maxx_wgs, miny_wgs,maxy_wgs =geom.GetEnvelope()
+                minx_wgs, maxx_wgs, miny_wgs, maxy_wgs = geom.GetEnvelope()
                 pt_x = random.uniform(minx_wgs, maxx_wgs)
                 pt_y = random.uniform(miny_wgs, maxy_wgs)
+
                                             
 def subtask_update_imageid_sid():
-    pg_src = pgsql.Pgsql("10.0.81.19", "9999","postgres", "", "gscloud_web")
+    pg_src = pgsql.Pgsql("10.0.81.19", "9999", "postgres", "", "gscloud_web")
     for region in region_dict.keys():
         # region_tiles_shp = os.path.join(region_bbox_path,(region + '_subtiles.shp'))
             # region is one of the region_dict.keys()
-
           
         # print('row,col: %s, %s'%(rnum,cnum))
         images_key = region_dict[region]['images_key']
@@ -539,14 +548,15 @@ def subtask_update_imageid_sid():
             for image in reversed(imageids):
 #                 find all the tiles contained in the image bbox
                 imagefile = os.path.join(irrg_path, image + '_IRRG.TIF')
-                imagebbox = get_image_bbox_withoutnodata(imagefile,'/tmp/%s.shp'%image)
+                imagebbox = get_image_bbox_withoutnodata(imagefile, '/tmp/%s.shp' % image)
                 
                 tile_update_imageid_sql = '''UPDATE public.mark_subtask SET imageid=%s where taskid='%s' and ST_Contains(st_geomfromtext(%s), geojson);'''
                 pg_src.update(tile_update_imageid_sql, (image, taskid, imagebbox))
             
-            task_region=get_wkt_by_tasktitle(task_title)
-            subtask_update_sql='''UPDATE public.mark_subtask SET sid=1 where taskid='%s' and ST_Contains(st_geomfromtext(%s), st_geomfromtext(geojson));'''
-            pg_src.update(subtask_update_sql, (taskid,task_region))
+            task_region = get_wkt_by_tasktitle(task_title)
+            subtask_update_sql = '''UPDATE public.mark_subtask SET sid=1 where taskid='%s' and ST_Contains(st_geomfromtext(%s), st_geomfromtext(geojson));'''
+            pg_src.update(subtask_update_sql, (taskid, task_region))
+
              
 def check_image_resolution(imagefile):
     dataset = gdal.Open(imagefile)
@@ -558,15 +568,16 @@ def check_image_resolution(imagefile):
     geotrans = dataset.GetGeoTransform()
     gt = list(geotrans)
     
-    if gt[1]!=RESOLUTION:
+    if gt[1] != RESOLUTION:
         target_file = '/tmp/birrg_30.tif'
-        resampling(imagefile, target_file, scale=gt[1]/RESOLUTION)
-        rm_cmd = 'rm -rf %s'%imagefile
+        resampling(imagefile, target_file, scale=gt[1] / RESOLUTION)
+        rm_cmd = 'rm -rf %s' % imagefile
         print(rm_cmd)
         os.system(rm_cmd)
-        mv_cmd = 'mv %s %s'%(target_file,imagefile)
+        mv_cmd = 'mv %s %s' % (target_file, imagefile)
         print(mv_cmd)
         os.system(mv_cmd)
+
         
 def resample_dem(region_dem_file, gt_file, outfile):
     ds = gdal.Open(region_dem_file)
@@ -577,37 +588,41 @@ def resample_dem(region_dem_file, gt_file, outfile):
     os.system(proj_cmd)
     check_image_resolution(outfile)
 
+
 def process_dem():
     for region in region_dict.keys():
         year_list = region_dict[region]['year']          
         for year in year_list:
-            region_dem_file = os.path.join(dem_path,region+'_'+str(year)+'_dem.tif')
-            outfile = os.path.join(dem30_path,region+'_'+str(year)+'_dem.tif')
+            region_dem_file = os.path.join(dem_path, region + '_' + str(year) + '_dem.tif')
+            outfile = os.path.join(dem30_path, region + '_' + str(year) + '_dem.tif')
 #             merge_all_dem(region_data,region_dem_file)
             gtfile = os.path.join(gt_path, region + '_' + str(year) + '.tif')
-            resample_dem(region_dem_file, gtfile,outfile)
+            resample_dem(region_dem_file, gtfile, outfile)
+
             
 def merge_dem():
     for region in region_dict.keys():
         year_list = region_dict[region]['year']          
         for year in year_list:
             gtfile = os.path.join(gt_path, region + '_' + str(year) + '.tif')
-            wgs_bbox_list, rnum, cnum, region_bbox = gen_tile_bbox(gtfile,BLOCK_SIZE, OVERLAP_SIZE)
-            region_minx=region_bbox[0]
-            region_miny=region_bbox[3]
-            region_maxx=region_bbox[2]
-            region_maxy=region_bbox[1]
+            wgs_bbox_list, rnum, cnum, region_bbox = gen_tile_bbox(gtfile, BLOCK_SIZE, OVERLAP_SIZE)
+            region_minx = region_bbox[0]
+            region_miny = region_bbox[3]
+            region_maxx = region_bbox[2]
+            region_maxy = region_bbox[1]
             region_data = region_search_dem(region_miny, region_maxy, region_minx, region_maxx)
-            region_dem_file = os.path.join(dem_path,region+'_'+str(year)+'_dem.tif')
-            outfile = os.path.join(dem30_path,region+'_'+str(year)+'_dem.tif')
-            merge_all_dem(region_data,region_dem_file)
+            region_dem_file = os.path.join(dem_path, region + '_' + str(year) + '_dem.tif')
+            outfile = os.path.join(dem30_path, region + '_' + str(year) + '_dem.tif')
+            merge_all_dem(region_data, region_dem_file)
+
             
 def process_irrg():
     irrg_files = os.listdir(irrg_path)
     for irrg_file in irrg_files:
         if irrg_file.endswith('_IRRG.TIF'):
-            imagefile = os.path.join(irrg_path,irrg_file)
+            imagefile = os.path.join(irrg_path, irrg_file)
             check_image_resolution(imagefile)
+
             
 def gen_task():
     for region in region_dict.keys():
@@ -615,7 +630,7 @@ def gen_task():
         year_list = region_dict[region]['year']
 #          
         for year in year_list:
-            tile_shp = os.path.join(region_bbox_path,(region + '_'+str(year)+'_'+'tiles.shp'))
+            tile_shp = os.path.join(region_bbox_path, (region + '_' + str(year) + '_' + 'tiles.shp'))
 #             wgs_bbox_list, rnum, cnum, region_bbox = gen_tile_bbox(region_file,BLOCK_SIZE, OVERLAP_SIZE)
 #             tile_bbox_to_shp(wgs_bbox_list, rnum, cnum, tile_shp)
             if not os.path.exists(tile_shp):
@@ -623,8 +638,10 @@ def gen_task():
                 continue
 #              
             imageids = get_imageids(images_key=images_key, year=year)
-            task_title= region + '_'+str(year)
+            task_title = region + '_' + str(year)
             tasktiles_shp_into_pgsql(task_title, tile_shp, imageids)
+
+
 if __name__ == "__main__":
 #     task_update()
 #     gen_subtask()
@@ -707,7 +724,6 @@ if __name__ == "__main__":
 #                 minx_wgs, maxx_wgs, miny_wgs,maxy_wgs =geom.GetEnvelope()
 #                 wgs_bbox_list = []
 #                 wgs_bbox_list.append([minx_wgs, maxy_wgs, maxx_wgs, miny_wgs, row, col])          
-
             
 #             for image in reversed(imageids):
 # #                 find all the tiles contained in the image bbox
