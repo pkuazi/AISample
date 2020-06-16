@@ -17,26 +17,38 @@ from utils.resampling import resampling
 BLOCK_SIZE = 256
 OVERLAP_SIZE = 13
 RESOLUTION=30.0
-region_dict = {'bj':{'region_tif':'bj.tif', 'year':[2001, 2003, 2004], 'images_key':'bj'},
-               'cd':{'region_tif':'cd.tif', 'year':[1990, 2000, 2010, 2015], 'images_key':'cd_zjk'},
-               'liangji':{'region_tif':'liangji.tif', 'year':[2015], 'images_key':'liangji'},
-               'mws':{'region_tif': 'mws.tif', 'year':[1978, 2000, 2015], 'images_key':'mws'},
-               'PD':{'region_tif': 'PD.tif', 'year':[1995, 2005, 2015], 'images_key':'PD'},
-               'shanghai':{'region_tif':'shanghai.tif', 'year':[2006, 2009], 'images_key':'shanghai'},
-               "sjz":{'region_tif': 'sjz.tif', 'year':[2013], 'images_key':'sjz'},
-               'wuhan':{'region_tif':'wuhan.tif', 'year':[2015], 'images_key':'wuhan'},
-               'xiaoshan':{'region_tif': 'xiaoshan.tif', 'year':[1996, 2001, 2006, 2013], 'images_key':'xiaoshan'},
-               'yishui':{'region_tif':'yishui.tif', 'year':[1995, 2005, 2015], 'images_key':'yishui'},
-               'zjk':{'region_tif': 'zjk.tif', 'year':[1990, 2000, 2010, 2015], 'images_key':'cd_zjk'},
+# region_dict = {'bj':{'region_tif':'bj.tif', 'year':[2001, 2003, 2004], 'images_key':'bj'},
+#                'cd':{'region_tif':'cd.tif', 'year':[1990, 2000, 2010, 2015], 'images_key':'cd_zjk'},
+#                'liangji':{'region_tif':'liangji.tif', 'year':[2015], 'images_key':'liangji'},
+#                'mws':{'region_tif': 'mws.tif', 'year':[1978, 2000, 2015], 'images_key':'mws'},
+#                'PD':{'region_tif': 'PD.tif', 'year':[1995, 2005, 2015], 'images_key':'PD'},
+#                'shanghai':{'region_tif':'shanghai.tif', 'year':[2006, 2009], 'images_key':'shanghai'},
+#                "sjz":{'region_tif': 'sjz.tif', 'year':[2013], 'images_key':'sjz'},
+#                'wuhan':{'region_tif':'wuhan.tif', 'year':[2015], 'images_key':'wuhan'},
+#                'xiaoshan':{'region_tif': 'xiaoshan.tif', 'year':[1996, 2001, 2006, 2013], 'images_key':'xiaoshan'},
+#                'yishui':{'region_tif':'yishui.tif', 'year':[1995, 2005, 2015], 'images_key':'yishui'},
+#                'zjk':{'region_tif': 'zjk.tif', 'year':[1990, 2000, 2010, 2015], 'images_key':'cd_zjk'},
+#                }
+region_dict = {'bj':{ 'year':[2001, 2003, 2004], 'images_key':'bj'},
+               'cd':{ 'year':[1990, 2000, 2010, 2015], 'images_key':'cd_zjk'},
+               'liangji':{ 'year':[2015], 'images_key':'liangji'},
+               'mws':{ 'year':[1978, 2000, 2015], 'images_key':'mws'},
+               'PD':{ 'year':[1995, 2005, 2015], 'images_key':'PD'},
+               'shanghai':{ 'year':[2006, 2009], 'images_key':'shanghai'},
+               "sjz":{ 'year':[2013], 'images_key':'sjz'},
+               'wuhan':{ 'year':[2015], 'images_key':'wuhan'},
+               'xiaoshan':{ 'year':[1996, 2001, 2006, 2013], 'images_key':'xiaoshan'},
+               'yishui':{ 'year':[1995, 2005, 2015], 'images_key':'yishui'},
+               'zjk':{'year':[1990, 2000, 2010, 2015], 'images_key':'cd_zjk'},
                }
 ROOT_PATH = '/mnt/rsimages/lulc/AISample'
 # ROOT_PATH = '/mnt/win/data/AISample/'
-region_tif_path = os.path.join(ROOT_PATH, 'region_raster')
+# region_tif_path = os.path.join(ROOT_PATH, 'region_raster')
 region_shp_path = os.path.join(ROOT_PATH,'region_shp')
 region_bbox_path = os.path.join(ROOT_PATH, 'region_bbox')
 if not os.path.exists(region_bbox_path):
     os.system('mkdir %s' % region_bbox_path)
-region_files = os.listdir(region_tif_path)
+# region_files = os.listdir(region_tif_path)
 imageid_path = os.path.join(ROOT_PATH, 'IMAGE')
 imageids_file = os.path.join(imageid_path, 'imageids.csv')
 
@@ -330,8 +342,6 @@ def task_update():
     for region in region_dict.keys():
         # region_tiles_shp = os.path.join(region_bbox_path,(region + '_subtiles.shp'))
             # region is one of the region_dict.keys()
-        region_tif = region_dict[region]['region_tif']
-        region_file = os.path.join(region_tif_path, region_tif)
         
         # print('row,col: %s, %s'%(rnum,cnum))
         images_key = region_dict[region]['images_key']
@@ -364,8 +374,6 @@ def tiling_for_dataset():
     for region in region_dict.keys():
         # region_tiles_shp = os.path.join(region_bbox_path,(region + '_subtiles.shp'))
             # region is one of the region_dict.keys()
-        region_tif = region_dict[region]['region_tif']
-        region_file = os.path.join(region_tif_path, region_tif)
           
         # print('row,col: %s, %s'%(rnum,cnum))
         images_key = region_dict[region]['images_key']
@@ -404,8 +412,7 @@ def gen_subtask():
     for region in region_dict.keys():
         # region_tiles_shp = os.path.join(region_bbox_path,(region + '_subtiles.shp'))
             # region is one of the region_dict.keys()
-        region_tif = region_dict[region]['region_tif']
-        region_file = os.path.join(region_tif_path, region_tif)
+
           
         # print('row,col: %s, %s'%(rnum,cnum))
         images_key = region_dict[region]['images_key']
@@ -415,9 +422,10 @@ def gen_subtask():
 #             subtask--tiles into pgsql
             task_title = region + '_' + str(year)
             imageids = get_imageids(images_key=images_key, year=year)
+            gtfile = os.path.join(gt_path, region + '_' + str(year) + '.tif')
             
             tile_shp = os.path.join(region_bbox_path,(region + '_'+str(year)+'_'+'tiles.shp'))
-            wgs_bbox_list, rnum, cnum, region_bbox = gen_tile_bbox(region_file,BLOCK_SIZE, OVERLAP_SIZE)
+            wgs_bbox_list, rnum, cnum, region_bbox = gen_tile_bbox(gtfile,BLOCK_SIZE, OVERLAP_SIZE)
             tile_bbox_to_shp(wgs_bbox_list, rnum, cnum, tile_shp)
 #             tasktiles_shp_into_pgsql(task_title, tile_shp, imageids)
             sql = "select id from public.mark_task where title='%s' " % (task_title)
@@ -465,8 +473,7 @@ def gen_random_samplepts():
     for region in region_dict.keys():
         # region_tiles_shp = os.path.join(region_bbox_path,(region + '_subtiles.shp'))
             # region is one of the region_dict.keys()
-        region_tif = region_dict[region]['region_tif']
-        region_file = os.path.join(region_tif_path, region_tif)
+
           
         # print('row,col: %s, %s'%(rnum,cnum))
         images_key = region_dict[region]['images_key']
@@ -506,8 +513,7 @@ def subtask_update_imageid_sid():
     for region in region_dict.keys():
         # region_tiles_shp = os.path.join(region_bbox_path,(region + '_subtiles.shp'))
             # region is one of the region_dict.keys()
-        region_tif = region_dict[region]['region_tif']
-        region_file = os.path.join(region_tif_path, region_tif)
+
           
         # print('row,col: %s, %s'%(rnum,cnum))
         images_key = region_dict[region]['images_key']
@@ -561,8 +567,6 @@ def resample_dem(region_dem_file, region_file, outfile):
 
 def process_dem():
     for region in region_dict.keys():
-        region_tif = region_dict[region]['region_tif']
-        region_file = os.path.join(region_tif_path, region_tif)
         year_list = region_dict[region]['year']          
         for year in year_list:
             region_dem_file = os.path.join(dem_path,region+'_'+str(year)+'_dem.tif')
@@ -578,7 +582,8 @@ if __name__ == "__main__":
 #             imagefile = os.path.join(irrg_path,irrg_file)
 #             check_image_resolution(imagefile)
 #     tiling_for_dataset()
-    process_dem()
+#     process_dem()
+    gen_subtask()
 #     sql = '''select geojson, imageid from mark_subtask where guid like 'mws_1978_45_24';'''
 #     data = pg_src.getAll(sql)
 #     geojson = data[0][0]
@@ -598,8 +603,7 @@ if __name__ == "__main__":
 #     for region in region_dict.keys():
 #         # region_tiles_shp = os.path.join(region_bbox_path,(region + '_subtiles.shp'))
 #             # region is one of the region_dict.keys()
-#         region_tif = region_dict[region]['region_tif']
-#         region_file = os.path.join(region_tif_path, region_tif)
+
 #          
 #         # print('row,col: %s, %s'%(rnum,cnum))
 #         images_key = region_dict[region]['images_key']

@@ -9,11 +9,11 @@ BLOCK_SIZE=256
 OVERLAP_SIZE=13
 
     
-def gen_tile_bbox(region_file,BLOCK_SIZE,OVERLAP_SIZE):
-    print('the image is :', region_file)
-    dataset = gdal.Open(region_file)
+def gen_tile_bbox(gt_file,BLOCK_SIZE,OVERLAP_SIZE):
+    print('the image is :', gt_file)
+    dataset = gdal.Open(gt_file)
     if dataset is None:
-        print("Failed to open file: " + region_file)
+        print("Failed to open file: " + gt_file)
         sys.exit(1)
     band = dataset.GetRasterBand(1)
     xsize = dataset.RasterXSize
