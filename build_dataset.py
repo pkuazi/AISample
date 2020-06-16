@@ -571,7 +571,7 @@ def process_dem():
         for year in year_list:
             region_dem_file = os.path.join(dem_path,region+'_'+str(year)+'_dem.tif')
             outfile = os.path.join(dem30_path,region+'_'+str(year)+'_dem.tif')
-            merge_all_dem(region_data,region_dem_file)
+#             merge_all_dem(region_data,region_dem_file)
             gtfile = os.path.join(gt_path, region + '_' + str(year) + '.tif')
             resample_dem(region_dem_file, gtfile,outfile)
             
