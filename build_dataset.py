@@ -370,7 +370,7 @@ def proj_image(imagefile, gt_file, outfile):
     outSpatialRef = osr.SpatialReference()
     outSpatialRef.SetFromUserInput(out_proj)       
 
-    if inSpatialRef.IsSame(self.outSpatialRef) == 0:
+    if inSpatialRef.IsSame(outSpatialRef) == 0:
         proj_cmd = "gdalwarp -t_srs %s %s %s" % (out_proj, imagefile, outfile) 
         os.system(proj_cmd)
     else:
