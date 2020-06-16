@@ -623,8 +623,8 @@ def gen_task():
             task_title= region + '_'+str(year)
             tasktiles_shp_into_pgsql(task_title, tile_shp, imageids)
 if __name__ == "__main__":
-#     gen_subtask()
-#     task_update()
+    task_update()
+    gen_subtask()
 #     process_dem()
     subtask_update_imageid_sid()
     tiling_for_dataset()
