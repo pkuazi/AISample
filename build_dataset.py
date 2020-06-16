@@ -568,7 +568,8 @@ def process_dem():
             region_dem_file = os.path.join(dem_path,region+'_'+str(year)+'_dem.tif')
             outfile = os.path.join(dem30_path,region+'_'+str(year)+'_dem.tif')
             merge_all_dem(region_data,region_dem_file)
-            resample_dem(region_dem_file, region_file,outfile)
+            gtfile = os.path.join(gt_path, region + '_' + str(year) + '.tif')
+            resample_dem(region_dem_file, gtfile,outfile)
             
 if __name__ == "__main__":
 #     irrg_files = os.listdir(irrg_path)
@@ -576,7 +577,8 @@ if __name__ == "__main__":
 #         if irrg_file.endswith('_IRRG.TIF'):
 #             imagefile = os.path.join(irrg_path,irrg_file)
 #             check_image_resolution(imagefile)
-    tiling_for_dataset()
+#     tiling_for_dataset()
+    process_dem()
 #     sql = '''select geojson, imageid from mark_subtask where guid like 'mws_1978_45_24';'''
 #     data = pg_src.getAll(sql)
 #     geojson = data[0][0]
