@@ -402,12 +402,12 @@ def tiling_for_dataset():
                     continue
 #                 
                 imagefile = os.path.join(irrg_path, imageid + '_IRRG.TIF')
-                outfile = '/tmp/%s_IRRG.TIF'%(imageid)
-                proj_image(imagefile, gtfile, outfile)
+                outimagefile = '/tmp/%s_IRRG.TIF'%(imageid)
+                proj_image(imagefile, gtfile, outimagefile)
                 
                 demfile = os.path.join(dem30_path,region+'_'+str(year)+'_dem.tif')
-                outfile = '/tmp/%s_dem.TIF'%(region+'_'+str(year))
-                proj_image(demfile, gtfile, outfile)
+                outdemfile = '/tmp/%s_dem.TIF'%(region+'_'+str(year))
+                proj_image(demfile, gtfile, outdemfile)
 #
                 row=int(guid[-5:-3])
                 col=int(guid[-2:])
@@ -416,9 +416,9 @@ def tiling_for_dataset():
                 minx_wgs, maxx_wgs, miny_wgs,maxy_wgs =geom.GetEnvelope()
                 wgs_bbox_list = []
                 wgs_bbox_list.append([minx_wgs, maxy_wgs, maxx_wgs, miny_wgs, row, col])  
-                tiling_raster(outfile, wgs_bbox_list, irrg_tile_path,  3, region + '_' + str(year), '_'+imageid+'.tif')
+                tiling_raster(outimagefile, wgs_bbox_list, irrg_tile_path,  3, region + '_' + str(year), '_'+imageid+'.tif')
                 tiling_raster(gtfile,wgs_bbox_list, gt_tile_path,  1, region + '_' + str(year),'_label.tif')
-                tiling_raster(demfile,wgs_bbox_list, dem_tile_path,  1, region + '_' + str(year),'_dem.tif')
+                tiling_raster(outdemfile,wgs_bbox_list, dem_tile_path,  1, region + '_' + str(year),'_dem.tif')
 def gen_subtask():  
     pg_src = pgsql.Pgsql("10.0.81.19", "9999","postgres", "", "gscloud_web")
     for region in region_dict.keys():
