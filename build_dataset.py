@@ -555,12 +555,12 @@ def check_image_resolution(imagefile):
         print(mv_cmd)
         os.system(mv_cmd)
 if __name__ == "__main__":
-    irrg_files = os.listdir(irrg_path)
-    for irrg_file in irrg_files:
-        if irrg_file.endswith('_IRRG.TIF'):
-            imagefile = os.path.join(irrg_path,irrg_file)
-            check_image_resolution(imagefile)
-#     tiling_for_dataset()
+#     irrg_files = os.listdir(irrg_path)
+#     for irrg_file in irrg_files:
+#         if irrg_file.endswith('_IRRG.TIF'):
+#             imagefile = os.path.join(irrg_path,irrg_file)
+#             check_image_resolution(imagefile)
+    tiling_for_dataset()
 #     sql = '''select geojson, imageid from mark_subtask where guid like 'mws_1978_45_24';'''
 #     data = pg_src.getAll(sql)
 #     geojson = data[0][0]
