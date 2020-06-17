@@ -20,7 +20,7 @@ shp_file = os.path.join(shp_path, 'PD_1995_120035.shp')
 # geojson=os.path.join(shp_path, 'pd_1995_120035.geojson')
 
 # pg_src = pgsql.Pgsql("10.0.85.20", "postgres", "", "mark")
-pg_src = pgsql.Pgsql("10.0.81.19", "9999","postgres", "", "gscloud_web")
+pg_src = pgsql.Pgsql("10.0.81.19", "9999", "postgres", "", "gscloud_web")
 
 # def parse_shp_to_geojson(shpfile):
 #     return geojson
@@ -134,7 +134,7 @@ WHERE title = %s;'''
                 
                 row_s = '0' + str(row)           
                 col_s = '0' + str(col) 
-                guid = task_title+'_'+row_s[-2:] + '_' + col_s[-2:]
+                guid = task_title + '_' + row_s[-2:] + '_' + col_s[-2:]
                 ctime = get_curtime()
                 
                 insert_sql = '''INSERT INTO public.mark_subtask
@@ -154,20 +154,38 @@ SET guid=%s, taskid=%s, ctime=%s, geojson=%s;
                 else:
                     pg_src.update(update_sql, (guid, taskid, ctime, wkt))
                     print("insert subtask tile of ", guid)            
+
+
 def get_taskid_by_tasktitle(task_title):
-    task_search_sql = '''SELECT id FROM public.mark_task where title='%s';'''%(task_title)
+    task_search_sql = '''SELECT id FROM public.mark_task where title='%s';''' % (task_title)
     data = pg_src.getAll(task_search_sql)
     taskid = data[0][0]    
     return taskid    
+
+
 def get_wkt_by_tasktitle(task_title):
-    task_search_sql = '''SELECT geojson FROM public.mark_task where title='%s';'''%(task_title)
+    task_search_sql = '''SELECT geojson FROM public.mark_task where title='%s';''' % (task_title)
     data = pg_src.getAll(task_search_sql)
     region_wkt = data[0][0]    
     return region_wkt  
+
+
 if __name__ == '__main__':   
     print('test')
     # bj_2001: LT51230322001323BJC00  LT51230332001323BJC00
 #     subtask tiles into pgsql
+    region_dict = {'bj':{ 'year':[2001, 2003, 2004], 'images_key':'bj'},
+               'cd':{ 'year':[1990, 2000, 2010, 2015], 'images_key':'cd_zjk'},
+               'liangji':{ 'year':[2015], 'images_key':'liangji'},
+               'mws':{ 'year':[1978, 2000, 2015], 'images_key':'mws'},
+               'PD':{ 'year':[1995, 2005, 2015], 'images_key':'PD'},
+               'shanghai':{ 'year':[2006, 2009], 'images_key':'shanghai'},
+               "sjz":{ 'year':[2013], 'images_key':'sjz'},
+               'wuhan':{ 'year':[2015], 'images_key':'wuhan'},
+               'xiaoshan':{ 'year':[1996, 2001, 2006, 2013], 'images_key':'xiaoshan'},
+               'yishui':{ 'year':[1995, 2005, 2015], 'images_key':'yishui'},
+               'zjk':{'year':[1990, 2000, 2010, 2015], 'images_key':'cd_zjk'},
+               }
     for region in region_dict.keys():
 #         # region_tiles_shp = os.path.join(region_bbox_path,(region + '_subtiles.shp'))
 #             # region is one of the region_dict.keys()
@@ -176,19 +194,70 @@ if __name__ == '__main__':
 #          
 #         # print('row,col: %s, %s'%(rnum,cnum))
 #         images_key = region_dict[region]['images_key']
-#         year_list = region_dict[region]['year']
+        year_list = region_dict[region]['year']
 #          
         for year in year_list:
-            tile_shp = os.path.join(region_bbox_path,(region + '_'+str(year)+'_'+'tiles.shp'))
+            title = region + '_' + str(year)
+#             sql_task = '''select ctime, tag, image,geojson,gtfile from public.mark_task where title like '%s';'''%(title)
+            sql_task = '''SELECT id,geom FROM public.aisample_gt where title like '%s';''' % (title)
+            data = pg_src.getAll(sql_task)
+            gt_id = data[0][0]
+            geom=data[0][1]
+#             for i in range(len(data)):
+#                 guid = data[i][1]
+#                 ctime = data[i][3]
+#                 geom = data[i][4]
+#                 imageid = data[i][5]
+#                 
+#                 x = guid.split('_')
+#                 row = int(x[2])
+#                 col = int(x[3])
+#                 block_size = 256
+#                 overlap_size = 12
+#                 resolution = 30
+            
+#             region_name = region
+#             year=str(year)
+            
+#             insert_sql = '''INSERT INTO public.aisample_gt
+# (region_name, "year", imageset, geom, ctime, "label", title, fileloc)
+# VALUES(%s ,%s, %s, %s ,%s, %s, %s, %s);
+# '''
+#             insert_sql = '''INSERT INTO public.aisample_grid
+# (title, "row", col, gt_id, imageid, geom, block_size, overlap_size, resolution, ctime)
+# VALUES(%s, %s,%s, 0, %s, %s, 256,12,30, %s);
+# '''
+            update_sql = '''UPDATE public.aisample_grid SET is_in_gtregion=1 where gt_id='%s' and ST_Contains(st_geomfromtext(%s), st_geomfromtext(geom));'''
+            pg_src.update(update_sql, (gt_id, geom))
+            print("update subtask tile of ", gt_id)
+#             update_sql = '''UPDATE public.aisample_gt
+# SET region_name=%s, "year"=%s, imageset=%s, geom=%s, ctime=%s, "label"=%s, title=%s, fileloc=%s;
+# '''
+#             
+#                 sql_aisample='''select * from public.aisample_grid where title like '%s';'''%(guid)
+#                 datas = pg_src.getAll(sql_aisample)
+#                  
+#                 if len(datas) == 0:
+#                     pg_src.update(insert_sql, (guid, row, col, imageid, geom,  ctime))
+#                     print("insert subtask tile of ", guid)
+#     #                 pg_src.update(insert_sql, (region_name, year, imageset, geom,ctime,label,title,fileloc))
+#     #                 print("insert subtask tile of ", title)
+#                 else:
+#                     pg_src.update(update_sql, (guid, row, col, imageid, geom,  ctime))
+#                     print("insert subtask tile of ", guid)
+#                 pg_src.update(update_sql, (region_name, year, imageset, geom,ctime,label,title,fileloc))
+#                 print("update subtask tile of ", title) 
+            
+#             tile_shp = os.path.join(region_bbox_path,(region + '_'+str(year)+'_'+'tiles.shp'))
 #             wgs_bbox_list, rnum, cnum, region_bbox = gen_tile_bbox(region_file,BLOCK_SIZE, OVERLAP_SIZE)
 #             tile_bbox_to_shp(wgs_bbox_list, rnum, cnum, tile_shp)
-            if not os.path.exists(tile_shp):
-                print('the tiling shapefile does not exists')
-                continue
-#              
-            imageids = get_imageids(images_key=images_key, year=year)
-            task_title= region + '_'+str(year)
-            tasktiles_shp_into_pgsql(task_title, tile_shp, imageids)
+#             if not os.path.exists(tile_shp):
+#                 print('the tiling shapefile does not exists')
+#                 continue
+# #              
+#             imageids = get_imageids(images_key=images_key, year=year)
+#             task_title= region + '_'+str(year)
+#             tasktiles_shp_into_pgsql(task_title, tile_shp, imageids)
             
 #     with fiona.open(shp_file, 'r') as inp:
 #         projection = inp.crs_wkt
