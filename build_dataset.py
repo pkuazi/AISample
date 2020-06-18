@@ -658,6 +658,7 @@ def update_cityid_to_grid():
         pg_src.update(update_sql, (city_id, city_geom))
         print("update grid tile of ", city)
 def stats_rename_dataset(data_path):
+    pg_src = pgsql.Pgsql("10.0.81.19", "9999", "postgres", "", "gscloud_web")
     irrg_files = os.listdir(data_path)
     for irrg_file in irrg_files:
         if irrg_file.endswith('.tif'):
