@@ -695,9 +695,9 @@ if __name__ == "__main__":
 #     subtask_update_imageid_sid()
 #     tiling_for_dataset()
 #     stats_rename_dataset(irrg_tile_path)
-#     stats_rename_dataset(dem_tile_path)
+    stats_rename_dataset(dem_tile_path)
 #     stats_rename_dataset(gt_tile_path)
-    update_cityid_to_grid()
+#     update_cityid_to_grid()
 #     sql = '''select geojson, imageid from mark_subtask where guid like 'mws_1978_45_24';'''
 #     data = pg_src.getAll(sql)
 #     geojson = data[0][0]
