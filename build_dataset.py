@@ -13,6 +13,7 @@ from gen_subtask_bbox import gen_tile_bbox, tile_bbox_to_shp
 from shp_into_pgsql import tasktiles_shp_into_pgsql, gjson_geotrans_to_wgs84, get_curtime, get_taskid_by_tasktitle, get_wkt_by_tasktitle
 from image_search_merge import region_query_tiles, query_tiles_by_tasktitle, region_search_dem, merge_all_dem
 from utils.resampling import resampling
+from asn1crypto._ffi import null
 
 BLOCK_SIZE = 256
 OVERLAP_SIZE = 13
@@ -653,7 +654,7 @@ def update_cityid_to_grid():
         city_geom = city_data[0][2]
         
         update_sql = '''UPDATE public.aisample_grid
-    SET alias=%s where ST_Contains(st_geomfromtext(st_astext(%s)), st_geomfromtext(geom) );  '''
+    SET alias=%s where ST_Intersects(st_geomfromtext(st_astext(%s)), st_geomfromtext(geom) );  '''
                                                    
         pg_src.update(update_sql, (city_id, city_geom))
         print("update grid tile of ", city)
@@ -673,11 +674,19 @@ def stats_rename_dataset(data_path):
             print(city_sql)
             city_data = pg_src.getAll(city_sql)
             city_id = city_data[0][0]
-            newname = str(city_id)+'_'+year+'_'+row+'_'+col+'_'+suffix
-            newpath = os.path.join(data_path, newname)
-            mv_cmd = 'mv %s %s'%(oldpath,newpath)
-            os.system(mv_cmd)
-            
+            if city_id is not null:
+                newname = str(city_id)+'_'+year+'_'+row+'_'+col+'_'+suffix
+                newpath = os.path.join(data_path, newname)
+                mv_cmd = 'mv %s %s'%(oldpath,newpath)
+                os.system(mv_cmd)
+        
+#     city_list = ['石家庄市','张家口市','承德市','乌海市','鄂尔多斯市','杭州市','青岛市','济宁市', '泰安市',
+# '临沂市','菏泽市','武汉市','延安市','榆林市','银川市', '石嘴山市','吴忠市','中卫市']
+#     for city in city_list:
+#         city_sql ='''SELECT id, provid, geom FROM public.cn_city where name like '%s';'''%(city) 
+#         city_data = pg_src.getAll(city_sql)
+#         print(city, city_data[0][0])
+
     
 if __name__ == "__main__":
 #     task_update()
@@ -685,9 +694,10 @@ if __name__ == "__main__":
 #     process_dem()
 #     subtask_update_imageid_sid()
 #     tiling_for_dataset()
-    stats_rename_dataset(irrg_tile_path)
-    stats_rename_dataset(dem_tile_path)
-    stats_rename_dataset(gt_tile_path)
+#     stats_rename_dataset(irrg_tile_path)
+#     stats_rename_dataset(dem_tile_path)
+#     stats_rename_dataset(gt_tile_path)
+    update_cityid_to_grid()
 #     sql = '''select geojson, imageid from mark_subtask where guid like 'mws_1978_45_24';'''
 #     data = pg_src.getAll(sql)
 #     geojson = data[0][0]
