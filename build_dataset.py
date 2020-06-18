@@ -668,8 +668,9 @@ def stats_rename_dataset(data_path):
             col = region[2][2:]
             suffix = region[3]
             title = region[0]+'_'+year+'_'+row+'_'+col
-            city_id = '''select city_id from public.aisample_grid where title like %s;'''%s(title)
-            city_data = pg_src.getAll(city_id)
+            city_sql = '''select city_id from public.aisample_grid where title like %s;'''%(title)
+            print(city_sql)
+            city_data = pg_src.getAll(city_sql)
             city_id = city_data[0][0]
             newname = str(city_id)+'_'+year+'_'+row+'_'+col+'_'+suffix
             newpath = os.path.join(data_path, newname)
