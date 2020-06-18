@@ -657,11 +657,11 @@ def update_cityid_to_grid():
                                                    
         pg_src.update(update_sql, (city_id, city_geom))
         print("update grid tile of ", city)
-def stats_rename_dataset():
-    irrg_files = os.listdir(irrg_tile_path)
+def stats_rename_dataset(data_path):
+    irrg_files = os.listdir(data_path)
     for irrg_file in irrg_files:
         if irrg_file.endswith('.tif'):
-            oldpath = os.path.join(irrg_tile_path,irrg_file)
+            oldpath = os.path.join(data_path,irrg_file)
             region = irrg_file.split('_')
             year = region[1]
             row = region[2][:2]
@@ -672,7 +672,7 @@ def stats_rename_dataset():
             city_data = pg_src.getAll(city_id)
             city_id = city_data[0][0]
             newname = str(city_id)+'_'+year+'_'+row+'_'+col+'_'+suffix
-            newpath = os.path.join(irrg_tile_path, newname)
+            newpath = os.path.join(data_path, newname)
             mv_cmd = 'mv %s %s'%(oldpath,newpath)
             os.system(mv_cmd)
             
@@ -683,7 +683,9 @@ if __name__ == "__main__":
 #     process_dem()
 #     subtask_update_imageid_sid()
 #     tiling_for_dataset()
-    stats_rename_dataset()
+    stats_rename_dataset(irrg_tile_path)
+    stats_rename_dataset(dem_tile_path)
+    stats_rename_dataset(gt_tile_path)
 #     sql = '''select geojson, imageid from mark_subtask where guid like 'mws_1978_45_24';'''
 #     data = pg_src.getAll(sql)
 #     geojson = data[0][0]
