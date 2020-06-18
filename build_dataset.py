@@ -641,7 +641,7 @@ def gen_task():
             task_title = region + '_' + str(year)
             tasktiles_shp_into_pgsql(task_title, tile_shp, imageids)
 
-def stats_rename_dataset():
+def update_cityid_to_grid():
     pg_src = pgsql.Pgsql("10.0.81.19", "9999", "postgres", "", "gscloud_web")
     city_list = ['石家庄市','张家口市','承德市','乌海市','鄂尔多斯市','杭州市','青岛市','济宁市', '泰安市',
 '临沂市','菏泽市','武汉市','延安市','榆林市','银川市', '石嘴山市','吴忠市','中卫市']
@@ -657,7 +657,25 @@ def stats_rename_dataset():
                                                    
         pg_src.update(update_sql, (city_id, city_geom))
         print("update grid tile of ", city)
-    
+def stats_rename_dataset():
+    irrg_files = os.listdir(irrg_tile_path)
+    for irrg_file in irrg_files:
+        if irrg_file.endswith('.tif'):
+            oldpath = os.path.join(irrg_tile_path,irrg_file)
+            region = irrg_file.split('_')
+            year = region[1]
+            row = region[2][:2]
+            col = region[2][2:]
+            suffix = region[3]
+            title = region[0]+'_'+year+'_'+row+'_'+col
+            city_id = '''select city_id from public.aisample_grid where title like %s;'''%s(title)
+            city_data = pg_src.getAll(city_id)
+            city_id = city_data[0][0]
+            newname = str(city_id)+'_'+year+'_'+row+'_'+col+'_'+suffix
+            newpath = os.path.join(irrg_tile_path, newname)
+            mv_cmd = 'mv %s %s'%(oldpath,newpath)
+            os.system(mv_cmd)
+            
     
 if __name__ == "__main__":
 #     task_update()
