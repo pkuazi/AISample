@@ -641,13 +641,31 @@ def gen_task():
             task_title = region + '_' + str(year)
             tasktiles_shp_into_pgsql(task_title, tile_shp, imageids)
 
-
+def stats_rename_dataset():
+    pg_src = pgsql.Pgsql("10.0.81.19", "9999", "postgres", "", "gscloud_web")
+    city_list = ['石家庄市','张家口市','承德市','乌海市','鄂尔多斯市','杭州市','青岛市','济宁市', '泰安市',
+'临沂市','菏泽市','武汉市','延安市','榆林市','银川市', '石嘴山市','吴忠市','中卫市']
+    for city in city_list:
+        city_sql ='''SELECT id, provid, geom FROM public.cn_city where name like '%s';'''%(city) 
+        city_data = pg_src.getAll(city_sql)
+        city_id = city_data[0][0]
+        prov_id = city_data[0][1]
+        city_geom = city_data[0][2]
+        
+        update_sql = '''UPDATE public.aisample_grid
+    SET alias=%s where ST_Contains(st_geomfromtext(st_astext(%s)), st_geomfromtext(geom) );  '''
+                                                   
+        pg_src.update(update_sql, (city_id, city_geom))
+        print("update grid tile of ", city)
+    
+    
 if __name__ == "__main__":
 #     task_update()
 #     gen_subtask()
 #     process_dem()
 #     subtask_update_imageid_sid()
-    tiling_for_dataset()
+#     tiling_for_dataset()
+    stats_rename_dataset()
 #     sql = '''select geojson, imageid from mark_subtask where guid like 'mws_1978_45_24';'''
 #     data = pg_src.getAll(sql)
 #     geojson = data[0][0]
