@@ -673,14 +673,17 @@ def stats_rename_dataset(data_path):
             city_sql = '''select city_id from public.aisample_grid where title like '%s';'''%(title)
 #             print(city_sql)
             city_data = pg_src.getAll(city_sql)
-            city_id = city_data[0][0]
-            if city_id is None:
-                print(irrg_file, 'has no cityid')
+            if len(city_data)==0:
+                print('the file %s has no cityid'%(irrg_file))
             else:
-                newname = str(city_id)+'_'+year+'_'+row+'_'+col+'_'+suffix
-                newpath = os.path.join(data_path, newname)
-                mv_cmd = 'mv %s %s'%(oldpath,newpath)
-                os.system(mv_cmd)
+                city_id = city_data[0][0]
+                if city_id is None:
+                    print(irrg_file, 'has no cityid')
+                else:
+                    newname = str(city_id)+'_'+year+'_'+row+'_'+col+'_'+suffix
+                    newpath = os.path.join(data_path, newname)
+                    mv_cmd = 'mv %s %s'%(oldpath,newpath)
+                    os.system(mv_cmd)
         
 #     city_list = ['石家庄市','张家口市','承德市','乌海市','鄂尔多斯市','杭州市','青岛市','济宁市', '泰安市',
 # '临沂市','菏泽市','武汉市','延安市','榆林市','银川市', '石嘴山市','吴忠市','中卫市']
@@ -698,6 +701,10 @@ if __name__ == "__main__":
 #     tiling_for_dataset()
 #     stats_rename_dataset(irrg_tile_path)
     stats_rename_dataset(dem_tile_path)
+#     pg_src = pgsql.Pgsql("10.0.81.19", "9999", "postgres", "", "gscloud_web")
+#     city_sql = '''select city_id from public.aisample_grid where title like '%s';'''%('xxx')
+#     city_data = pg_src.getAll(city_sql)
+#     print(city_data)
 #     stats_rename_dataset(gt_tile_path)
 #     update_cityid_to_grid()
 #     sql = '''select geojson, imageid from mark_subtask where guid like 'mws_1978_45_24';'''
