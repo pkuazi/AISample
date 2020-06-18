@@ -646,6 +646,9 @@ def update_cityid_to_grid():
     pg_src = pgsql.Pgsql("10.0.81.19", "9999", "postgres", "", "gscloud_web")
     city_list = ['石家庄市','张家口市','承德市','乌海市','鄂尔多斯市','杭州市','青岛市','济宁市', '泰安市',
 '临沂市','菏泽市','武汉市','延安市','榆林市','银川市', '石嘴山市','吴忠市','中卫市']
+    grid_sql = '''select title from public.aisample_grid;'''
+    grid_title = pg_src.getAll(city_sql)
+
     for city in city_list:
         city_sql ='''SELECT id, provid, geom FROM public.cn_city where name like '%s';'''%(city) 
         city_data = pg_src.getAll(city_sql)
@@ -653,8 +656,7 @@ def update_cityid_to_grid():
         prov_id = city_data[0][1]
         city_geom = city_data[0][2]
         
-        update_sql = '''UPDATE public.aisample_grid
-    SET alias=%s where ST_Intersects(st_geomfromtext(st_astext(%s)), st_geomfromtext(geom) );  '''
+        update_sql = '''UPDATE public.aisample_grid a SET city_id= (select cityid FROM public.aisample_cn_cities b where ST_Intersects(st_geomfromtext(st_astext(b.the_geom)), st_geomfromtext(a.geom)) limit 1); '''
                                                    
         pg_src.update(update_sql, (city_id, city_geom))
         print("update grid tile of ", city)
@@ -699,13 +701,13 @@ if __name__ == "__main__":
 #     process_dem()
 #     subtask_update_imageid_sid()
 #     tiling_for_dataset()
-#     stats_rename_dataset(irrg_tile_path)
+    stats_rename_dataset(irrg_tile_path)
     stats_rename_dataset(dem_tile_path)
 #     pg_src = pgsql.Pgsql("10.0.81.19", "9999", "postgres", "", "gscloud_web")
 #     city_sql = '''select city_id from public.aisample_grid where title like '%s';'''%('xxx')
 #     city_data = pg_src.getAll(city_sql)
 #     print(city_data)
-#     stats_rename_dataset(gt_tile_path)
+    stats_rename_dataset(gt_tile_path)
 #     update_cityid_to_grid()
 #     sql = '''select geojson, imageid from mark_subtask where guid like 'mws_1978_45_24';'''
 #     data = pg_src.getAll(sql)
