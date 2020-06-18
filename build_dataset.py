@@ -674,7 +674,9 @@ def stats_rename_dataset(data_path):
             print(city_sql)
             city_data = pg_src.getAll(city_sql)
             city_id = city_data[0][0]
-            if city_id is not null:
+            if city_id is None:
+                print(irrg_file, 'has no cityid')
+            else:
                 newname = str(city_id)+'_'+year+'_'+row+'_'+col+'_'+suffix
                 newpath = os.path.join(data_path, newname)
                 mv_cmd = 'mv %s %s'%(oldpath,newpath)
